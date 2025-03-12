@@ -13,5 +13,22 @@ class TextFonts {
   color: Colours.text,
   fontSize: 40,
   );
+  
+  static TextStyle titles = GoogleFonts.poppins( 
+   color: Colours.text,
+   fontSize:  40,
+   fontWeight: FontWeight.bold,
+  );
+   static TextStyle titlesAppBar = GoogleFonts.poppins( 
+   color: Colors.white,
+   fontSize:  30,
+   fontWeight: FontWeight.bold,
+  );
+    
+   static TextStyle normal = GoogleFonts.poppins( 
+   color: Colours.text,
+   fontSize:  17,
+  );
+
 
 }
