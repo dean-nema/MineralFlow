@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mineralflow/view/pages/launch.dart';
+import 'package:mineralflow/view/pages/registered_sample.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const Splash(),
+      home: Splash(),
        );
   }
 }
