@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
+import 'package:mineralflow/view/pages/batch_sample.dart';
+import 'package:mineralflow/view/pages/registered_sample.dart';
 
 class Appbar extends StatelessWidget implements PreferredSizeWidget {
   const Appbar({super.key});
@@ -58,12 +60,22 @@ class appBarLeft extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => BatchSample()),
+                  );
+                },
                 child: Text("Add Batch Samples", style: TextFonts.normal),
               ),
               const SizedBox(width: 14),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => RegisteredSample()),
+                  );
+                },
                 child: Text("Registered Samples", style: TextFonts.normal),
               ),
               const SizedBox(width: 14),

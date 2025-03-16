@@ -38,11 +38,11 @@ class BatchType extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      BoxText2Btn(title: "Routine Samples", func: func,),
+                      BoxText2Btn(title: "Routine Samples"),
                       const SizedBox(width: 30),
-                      BoxText2Btn(title: "StockPiles", func: func),
+                      BoxText2Btn(title: "StockPiles"),
                       const SizedBox(width: 30),
-                      BoxText2Btn(title: "Special Sample", func: func),
+                      BoxText2Btn(title: "Special Sample",),
                     ],
                   ),
                 ),

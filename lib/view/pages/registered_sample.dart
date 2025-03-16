@@ -71,11 +71,11 @@ class _RegisteredSampleState extends State<RegisteredSample> {
                           _selectedOption = newValue;
                           // Add filtering logic here if needed
                         });
-                      },
+                      }
                     ),
                     const SizedBox(width: 30),
                     Container(
-                      width: 189,
+                      width: 210,
                       height: 70,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.all(Radius.circular(22)),
@@ -109,11 +109,14 @@ class _RegisteredSampleState extends State<RegisteredSample> {
                           // Handle "New" button press (e.g., add new sample)
                           print('New sample button pressed');
                         },
-                        child:  Row(
-                          children: [
-                            Text('Print Selected', style: TextFonts.buttonText,),
-                            Image.asset("assets/images/Printer.png"),
-                          ],
+                        child:  Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: [
+                              Text('Print Selected', style: TextFonts.buttonText,),
+                              Image.asset("assets/images/Printer.png"),
+                            ],
+                          ),
                         ),
                       ),
                     ),

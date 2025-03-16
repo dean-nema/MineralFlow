@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mineralflow/data/data.dart';
+import 'package:mineralflow/models/plant_details_model.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
 import 'package:mineralflow/view/components/add_new_button.dart';
 import 'package:mineralflow/view/components/app_bar.dart';
-import 'package:mineralflow/view/components/box_text_button.dart';
 import 'package:mineralflow/view/components/proceed_btn.dart';
-import 'package:mineralflow/view/pages/batch_type.dart';
+import 'package:mineralflow/view/pages/category.dart';
 import 'package:mineralflow/view/pages/type_details.dart';
 
 class PlantDetails extends StatefulWidget {
@@ -23,10 +23,35 @@ class _PlantDetailsState extends State<PlantDetails> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     void func() {
-      Navigator.pushReplacement(
+      String locationStr = location.text;
+      var model = Data.getBatchByID();
+      if (model != null) {
+        for (var i = 0; i < _selections.length; i++) {
+          switch (i) {
+            case 0:
+              model.plant = PlantDetailsModel("CHPP", locationStr, null);
+              break;
+            case 1:
+              model.plant = PlantDetailsModel("CWP", locationStr, null);
+            default:
+          }
+        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => TypeDetails(batch: Data.getBatchByID()!.type!),
+          ),
+        );
+      } else {
+                Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) =>  TypeDetails(batch: Data.batches[1],)),
+        MaterialPageRoute(
+          builder: (context) => CategoryPage(),
+        ),
       );
+
+      }
     }
 
     return Scaffold(
@@ -159,20 +184,65 @@ class _PlantDetailsState extends State<PlantDetails> {
                 Row(
                   children: [
                     Expanded(
-                    flex: 2,
+                      flex: 2,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           AddNewButton(title: "Add New Plant", func: () {}),
-                          ProceedBtn(func: func),
+                          SizedBox(
+                            width: 200, // Rectangular width
+                            height: 100, // Rectangular height
+                            child: ElevatedButton(
+                              onPressed: func,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Colours.border, // Green background
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(12),
+                                  ),
+                                ),
+                                padding:
+                                    EdgeInsets.zero, // Remove default padding
+                                elevation: 0, // No shadow
+                                side:
+                                    BorderSide.none, // Explicitly remove border
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment
+                                        .center, // Center the content
+                                children: const [
+                                  Text(
+                                    "Proceed",
+                                    style: TextStyle(
+                                      color:
+                                          Colors
+                                              .white, // White text for contrast
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 8,
+                                  ), // Space between text and arrow
+                                  Icon(
+                                    Icons.arrow_forward, // Next arrow
+                                    color:
+                                        Colors
+                                            .white, // White arrow for contrast
+                                    size: 50,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     Expanded(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                        ],
+                        children: [],
                       ),
                     ),
                   ],

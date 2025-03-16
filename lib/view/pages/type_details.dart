@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:mineralflow/models/batch.dart';
+import 'package:mineralflow/models/batch_types_model.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
 import 'package:mineralflow/view/components/add_new_button.dart';
 import 'package:mineralflow/view/components/app_bar.dart';
-import 'package:mineralflow/view/components/box_text2_btn.dart';
 import 'package:mineralflow/view/components/types_button.dart';
 import 'package:mineralflow/view/pages/sample_description.dart';
 
 class TypeDetails extends StatelessWidget {
-  final Batch batch;
+  final BatchTypesModel batch;
  const TypeDetails({super.key, required this.batch});
 
   @override

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
 import 'package:mineralflow/view/components/app_bar.dart';
 import 'package:mineralflow/view/components/print_btn.dart';
 import 'package:mineralflow/view/components/stickers.dart';
+import 'package:mineralflow/view/pages/registered_sample.dart';
 
 class SampleStickers extends StatelessWidget {
   const SampleStickers({super.key});
@@ -22,26 +24,39 @@ class SampleStickers extends StatelessWidget {
             children: [
               Expanded(child: Text("Sample Stickers", style: TextFonts.titles)),
               Expanded(
-              flex: 3,
+                flex: 3,
                 child: SizedBox(
-                width: width,
+                  width: width,
                   child: Center(
                     child: GridView.builder(
-                    gridDelegate:  SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 374,
-                    mainAxisExtent: 190,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 374,
+                        mainAxisExtent: 190,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      itemCount: 6, // Number of stickers (adjust as needed)
+                      itemBuilder: (context, index) {
+                        return Stickers(); // Build each Stickers widget
+                      },
                     ),
-                    itemCount: 6, // Number of stickers (adjust as needed)
-                    itemBuilder: (context, index) {
-                      return Stickers(); // Build each Stickers widget
-                    },
-                                      ),
                   ),
                 ),
               ),
-              Expanded(child: PrintBtn(title: "Print Stickers", func: () {})),
+              Expanded(
+                child: PrintBtn(
+                  title: "Print Stickers",
+                  func: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => RegisteredSample(),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
