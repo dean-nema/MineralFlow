@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mineralflow/view/pages/launch.dart';
-import 'package:mineralflow/view/pages/registered_sample.dart';
 
 void main() {
   runApp(const MyApp());

@@ -24,20 +24,24 @@ class SampleStickers extends StatelessWidget {
             children: [
               Expanded(child: Text("Sample Stickers", style: TextFonts.titles)),
               Expanded(
-                flex: 3,
+                flex: 5,
                 child: SizedBox(
                   width: width,
                   child: Center(
                     child: GridView.builder(
                       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 374,
-                        mainAxisExtent: 190,
+                        maxCrossAxisExtent: 470,
+                        mainAxisExtent: 220,
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
                       ),
-                      itemCount: 6, // Number of stickers (adjust as needed)
+                      itemCount:
+                          Data.getStickers()
+                              .length, // Number of stickers (adjust as needed)
                       itemBuilder: (context, index) {
-                        return Stickers(); // Build each Stickers widget
+                        return Stickers(
+                          stickerObj: Data.getStickers()[index],
+                        ); // Build each Stickers widget
                       },
                     ),
                   ),
@@ -47,12 +51,22 @@ class SampleStickers extends StatelessWidget {
                 child: PrintBtn(
                   title: "Print Stickers",
                   func: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => RegisteredSample(),
-                      ),
+                    showDialog(
+                      context: context,
+                      builder:
+                          (_) => AlertDialog(
+                          backgroundColor: Colours.mainBg,
+                            title: Text("Printer"),
+                            content: Text("Printing currently unavailable"),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text("Ok"),
+                              ),
+                            ],
+                          ),
                     );
                   },
                 ),

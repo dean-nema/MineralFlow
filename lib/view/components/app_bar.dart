@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mineralflow/data/data.dart';
+import 'package:mineralflow/models/batch_category_model.dart';
+import 'package:mineralflow/models/batch_samples_model.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
-import 'package:mineralflow/view/pages/batch_sample.dart';
+import 'package:mineralflow/view/pages/batch_type.dart';
+import 'package:mineralflow/view/pages/category.dart';
+import 'package:mineralflow/view/pages/plant_details.dart';
 import 'package:mineralflow/view/pages/registered_sample.dart';
 
 class Appbar extends StatelessWidget implements PreferredSizeWidget {
@@ -24,7 +29,7 @@ class Appbar extends StatelessWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 90),
           Text(
-            "Sample Registration",
+            "Registration of Samples",
             style: GoogleFonts.poppins(fontSize: 24, color: Colors.white),
           ),
         ],
@@ -49,7 +54,7 @@ class appBarLeft extends StatelessWidget {
     return Align(
       alignment: Alignment.topRight,
       child: Container(
-        width: width * 0.4,
+        width: width * 0.6,
         height: 50,
         decoration: BoxDecoration(
           color: Colours.mainBg,
@@ -61,9 +66,10 @@ class appBarLeft extends StatelessWidget {
             children: [
               TextButton(
                 onPressed: () {
+                    Data.cleanUp();
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => BatchSample()),
+                    MaterialPageRoute(builder: (context) => CategoryPage()),
                   );
                 },
                 child: Text("Add Batch Samples", style: TextFonts.normal),
@@ -71,6 +77,37 @@ class appBarLeft extends StatelessWidget {
               const SizedBox(width: 14),
               TextButton(
                 onPressed: () {
+                    Data.cleanUp();
+                  BatchSamplesModel model = BatchSamplesModel();
+                  model.category = BatchCategory("PLANT SAMPLE");
+                  Data.batches.add(model);
+                  Data.currentBatchID = model.batchID;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => BatchType()),
+                  );
+                },
+                child: Text("Add Plant Samples", style: TextFonts.normal),
+              ),
+              const SizedBox(width: 14),
+              TextButton(
+                onPressed: () {
+                    Data.cleanUp();
+                  BatchSamplesModel model = BatchSamplesModel();
+                  model.category = BatchCategory("GEOLOGY SAMPLE");
+                  Data.batches.add(model); Data.currentBatchID = model.batchID;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PlantDetails()),
+                  );
+                },
+                child: Text("Add Geology Samples", style: TextFonts.normal),
+              ),
+              const SizedBox(width: 14),
+
+              TextButton(
+                onPressed: () {
+                    Data.cleanUp();
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => RegisteredSample()),

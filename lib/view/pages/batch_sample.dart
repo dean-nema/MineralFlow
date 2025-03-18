@@ -11,12 +11,6 @@ class BatchSample extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-      void func(){
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const  CategoryPage()),
-      );
-      }
     return Scaffold( 
     backgroundColor: Colours.mainBg,
     appBar: Appbar(),
@@ -24,8 +18,8 @@ class BatchSample extends StatelessWidget {
     child: Row(
     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-          BoxButton(image: "assets/images/Box.png", caption: "Add Batch Samples", func: func,),
-          BoxButton(image: "assets/images/file.png", caption: "View Registered Samples", func: func,)
+          BoxButton(image: "assets/images/Box.png", caption: "Add Batch Samples"),
+          BoxButton(image: "assets/images/file.png", caption: "View Registered Samples")
         ]
     ),
     ),

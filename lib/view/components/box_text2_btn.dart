@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mineralflow/data/data.dart';
-import 'package:mineralflow/models/batch_category_model.dart';
+import 'package:mineralflow/models/batch_selected_type_model.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
 import 'package:mineralflow/view/pages/category.dart';
@@ -43,23 +43,24 @@ class BoxText2Btn extends StatelessWidget {
           if (model != null) {
             switch (title) {
               case "Routine Samples":
-                model.type = Data.batcheTypes[1];
+                Data.selectedBatchType = Data.batcheTypes[1];
                 break;
               case "StockPiles":
-                model.type = Data.batcheTypes[2];
+                Data.selectedBatchType = Data.batcheTypes[2];
                 break;
               case "Special Sample":
-                model.type = Data.batcheTypes[0];
+                Data.selectedBatchType = Data.batcheTypes[0];
+                model.type = BatchSelectedTypeModel("Special Sample", "Special Sample");
                 break;
               default:
               throw Exception("Error which wasnt supposed to be reached inside BoxText2Btn.dart switch statement line 55");
             }
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => PlantDetails()),
             );
           } else {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => CategoryPage()),
             );

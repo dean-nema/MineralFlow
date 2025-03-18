@@ -11,35 +11,36 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
-    @override
-      void initState() {
-        super.initState();
-        Future.delayed(const Duration(seconds: 2), () {
-      Navigator.push(
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const BatchSample()),
       );
     });
-      }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    backgroundColor: Colours.mainBg,
-    body:  Center(
-      child: Column(
+      backgroundColor: Colours.mainBg,
+      body: Center(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [ 
-                 Image.asset("assets/images/logo.png"),
-                 const SizedBox(height: 20,),
-                 Text("Mineral Flow", style: TextFonts.logoName),
-               const SizedBox(height: 15,),
-                Text("by TSD LABS", style: TextFonts.logoCaption,),
-                const SizedBox(height: 30,),
-                CircularProgressIndicator(),               
+          children: [
+            Image.asset("assets/images/logo.png"),
+            const SizedBox(height: 20),
+            Text("Mineral Flow", style: TextFonts.logoName),
+            const SizedBox(height: 15),
+            Text("by TSD LABS", style: TextFonts.logoCaption),
+            const SizedBox(height: 30),
+            CircularProgressIndicator(),
           ],
+        ),
       ),
-    ),
     );
   }
 }

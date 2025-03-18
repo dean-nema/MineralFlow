@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
+import 'package:mineralflow/view/pages/sample_description.dart';
 
 class DescriptionBox extends StatefulWidget {
   final String title;
-  const DescriptionBox({super.key, required this.title});
+  DescriptionBoxClass boxDetails;
+   DescriptionBox({super.key, required this.title, required this.boxDetails});
 
   @override
   State<DescriptionBox> createState() => _DescriptionBoxState();
 }
 
 class _DescriptionBoxState extends State<DescriptionBox> {
-  String? _selectedValue;
+    TextEditingController massController = TextEditingController();
+  String _selectedValue = "Rock";
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -49,7 +52,8 @@ class _DescriptionBoxState extends State<DescriptionBox> {
                         textStyle: TextFonts.normal,
                         onSelected: (String? value) {
                           setState(() {
-                            _selectedValue = value; // Update selected value
+                            _selectedValue = value!; // Update selected value
+                            widget.boxDetails.description = value;
                           });
                         },
                         dropdownMenuEntries: const [
@@ -84,12 +88,22 @@ class _DescriptionBoxState extends State<DescriptionBox> {
                 padding: const EdgeInsets.only(right: 20.0, left: 20),
                 child: Row(
                   children: [
-                    Expanded(child: Text("Mass", style: TextFonts.buttonTitles4)),
+                    Expanded(child: Text("Mass (g)", style: TextFonts.buttonTitles4)),
                     Expanded(
                       child: SizedBox(
                         width: 318,
                         height: 66,
                         child: TextField(
+                            onChanged: (value){
+                                try {
+                                    double massValue = double.parse(value); 
+                            widget.boxDetails.description = _selectedValue;
+                                widget.boxDetails.mass = massValue;
+                                } catch (e) {
+                                         print(e);                         
+                                      }
+                            },
+                            controller: massController,
                           style: TextStyle(
                             color: Colours.text,
                             fontSize: 20,
@@ -105,7 +119,7 @@ class _DescriptionBoxState extends State<DescriptionBox> {
                             ),
                             
                             suffixIcon: IconButton(
-                              onPressed: () {},
+                              onPressed: () => massController.clear(),
                               icon: Icon(Icons.clear),
                             ),
                           ),

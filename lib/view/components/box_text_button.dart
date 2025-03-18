@@ -40,23 +40,23 @@ class BoxTextButton extends StatelessWidget {
           elevation: 0, // Disable default shadow (we use BoxShadow instead)
         ),
         onPressed: () {
+         Data.cleanUp();
           BatchSamplesModel model = BatchSamplesModel();
           model.category = BatchCategory(title);
           Data.batches.add(model);
           Data.currentBatchID = model.batchID;
           switch (title) {
             case "PLANT SAMPLE":
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => BatchType()),
               );
               break;
             case "GEOLOGY SAMPLE":
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => PlantDetails()),
               );
-
               break;
             default:
           }

@@ -3,54 +3,76 @@ import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/plant_details_model.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
-import 'package:mineralflow/view/components/add_new_button.dart';
 import 'package:mineralflow/view/components/app_bar.dart';
-import 'package:mineralflow/view/components/proceed_btn.dart';
+import 'package:mineralflow/view/pages/batch_type.dart';
 import 'package:mineralflow/view/pages/category.dart';
+import 'package:mineralflow/view/pages/special_smaple.dart';
 import 'package:mineralflow/view/pages/type_details.dart';
 
 class PlantDetails extends StatefulWidget {
-  PlantDetails({super.key});
+  const PlantDetails({super.key});
 
   @override
   State<PlantDetails> createState() => _PlantDetailsState();
 }
 
 class _PlantDetailsState extends State<PlantDetails> {
-  List<bool> _selections = [false, false];
+  final List<bool> _selections = [false, false];
   TextEditingController location = TextEditingController();
+  void showSnackBar(BuildContext context) {
+    final snackBar = SnackBar(
+      content: Text('Plant option not selected or Location not entered'),
+      backgroundColor: Colors.teal,
+      behavior: SnackBarBehavior.floating,
+      duration: Duration(seconds: 10),
+      action: SnackBarAction(
+        label: 'Dismiss',
+        disabledTextColor: Colors.white,
+        textColor: Colors.yellow,
+        onPressed: () {
+          ScaffoldMessenger.of(
+            context,
+          ).hideCurrentSnackBar(); // Dismiss the snackbar
+        },
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     void func() {
       String locationStr = location.text;
       var model = Data.getBatchByID();
-      if (model != null) {
-        for (var i = 0; i < _selections.length; i++) {
-          switch (i) {
-            case 0:
-              model.plant = PlantDetailsModel("CHPP", locationStr, null);
-              break;
-            case 1:
-              model.plant = PlantDetailsModel("CWP", locationStr, null);
-            default:
-          }
-        }
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => TypeDetails(batch: Data.getBatchByID()!.type!),
-          ),
-        );
+      if (_selections[0] == false && _selections[1] == false ||
+          locationStr.isEmpty) {
+        showSnackBar(context);
       } else {
-                Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CategoryPage(),
-        ),
-      );
-
+        if (model != null) {
+          if (_selections[0]) {
+            model.plant = PlantDetailsModel("CHPP", locationStr, null);
+          } else {
+            model.plant = PlantDetailsModel("CWP", locationStr, null);
+          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) =>
+                      Data.selectedBatchType!.batchName == "Special Sample" ||
+                              Data.getBatchByID()!.category!.categoryName ==
+                                  "GEOLOGY SAMPLE"
+                          ? SpecialSmaple()
+                          : TypeDetails(batch: Data.selectedBatchType!),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => CategoryPage()),
+          );
+        }
       }
     }
 
@@ -69,6 +91,20 @@ class _PlantDetailsState extends State<PlantDetails> {
               children: [
                 const SizedBox(height: 100),
                 ToggleButtons(
+                  isSelected: _selections,
+
+                  onPressed: (int index) {
+                    setState(() {
+                      for (int i = 0; i < _selections.length; i++) {
+                        _selections[i] = i == index;
+                      }
+                    });
+                  },
+                  selectedColor: Colors.transparent,
+                  color: Colors.transparent,
+                  fillColor: Colors.transparent,
+                  borderColor: Colors.transparent,
+                  selectedBorderColor: Colors.transparent,
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(28.0),
@@ -127,20 +163,6 @@ class _PlantDetailsState extends State<PlantDetails> {
                       ),
                     ),
                   ],
-                  isSelected: _selections,
-
-                  onPressed: (int index) {
-                    setState(() {
-                      for (int i = 0; i < _selections.length; i++) {
-                        _selections[i] = i == index;
-                      }
-                    });
-                  },
-                  selectedColor: Colors.transparent,
-                  color: Colors.transparent,
-                  fillColor: Colors.transparent,
-                  borderColor: Colors.transparent,
-                  selectedBorderColor: Colors.transparent,
                 ),
                 const SizedBox(height: 80),
                 SizedBox(
@@ -180,7 +202,7 @@ class _PlantDetailsState extends State<PlantDetails> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 60),
                 Row(
                   children: [
                     Expanded(
@@ -188,7 +210,63 @@ class _PlantDetailsState extends State<PlantDetails> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          AddNewButton(title: "Add New Plant", func: () {}),
+                          Container(
+                            width: 180,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colours.btn,
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(22),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  spreadRadius: 2,
+                                  blurRadius: 10,
+                                  offset: Offset(4, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Colours.btn, // Background color
+                                foregroundColor:
+                                    Colors
+                                        .transparent, // Prevents ripple color interference
+                                padding:
+                                    EdgeInsets.zero, // Remove default padding
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    22,
+                                  ), // Match Container's radius
+                                ),
+                                elevation:
+                                    0, // Disable default shadow (using BoxShadow instead)
+                              ),
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BatchType(),
+                                  ),
+                                );
+                              }, // Button action
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  Icon(
+                                    Icons.arrow_back_ios_new_outlined,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                  Text("Back", style: TextFonts.buttonText),
+                                ],
+                              ),
+                            ),
+                          ),
+
                           SizedBox(
                             width: 200, // Rectangular width
                             height: 100, // Rectangular height

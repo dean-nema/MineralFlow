@@ -49,6 +49,10 @@ class TextFonts {
     color: Colours.text,
     fontSize: 30,
    );
+   static TextStyle normal5= GoogleFonts.poppins( 
+    color: Colours.text,
+    fontSize: 26,
+   );
    
   static TextStyle buttonTitles2 = GoogleFonts.poppins( 
    color: Colours.text,

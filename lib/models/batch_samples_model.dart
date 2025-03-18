@@ -1,20 +1,24 @@
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/batch_category_model.dart';
-import 'package:mineralflow/models/batch_types_model.dart';
+import 'package:mineralflow/models/batch_selected_type_model.dart';
 import 'package:mineralflow/models/plant_details_model.dart';
 import 'package:mineralflow/models/sample_description_model.dart';
-import 'package:mineralflow/view/pages/batch_type.dart';
 
 class BatchSamplesModel {
-  final String _batchID; 
+  bool isComplete = false;
+  final String _batchID;
   BatchCategory? _category;
-  BatchTypesModel? _type;
+  BatchSelectedTypeModel? _type;
   PlantDetailsModel? _plant;
-  SampleDescriptionModel? _samplesDescription;
+  List<SampleDescriptionModel>? _samplesDescription;
 
-  BatchSamplesModel([this._category, this._type, this._plant, this._samplesDescription])
-  :  _batchID = "B${Data.getBatchCount()}";       
-  
+  BatchSamplesModel([
+    this._category,
+    this._type,
+    this._plant,
+    this._samplesDescription,
+  ]) : _batchID = "B${Data.getBatchCount()}";
+
   String get batchID => _batchID;
   BatchCategory? get category => _category;
 
@@ -22,9 +26,9 @@ class BatchSamplesModel {
     _category = value;
   }
 
-  BatchTypesModel? get type => _type;
+  BatchSelectedTypeModel? get type => _type;
 
-  set type(BatchTypesModel? value) {
+  set type(BatchSelectedTypeModel? value) {
     _type = value;
   }
 
@@ -34,9 +38,13 @@ class BatchSamplesModel {
     _plant = value;
   }
 
-  SampleDescriptionModel? get samplesDescription => _samplesDescription;
+  List<SampleDescriptionModel>? get samplesDescription => _samplesDescription;
 
-  set samplesDescription(SampleDescriptionModel? value) {
-    _samplesDescription = value;
+  void addSample(SampleDescriptionModel sample) {
+    if (_samplesDescription != null) {
+      _samplesDescription!.add(sample);
+    } else {
+      _samplesDescription = [sample];
+    }
   }
 }

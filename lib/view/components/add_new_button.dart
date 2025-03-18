@@ -4,8 +4,8 @@ import 'package:mineralflow/view/Constants/texts.dart';
 
 class AddNewButton extends StatelessWidget {
   final String title;
-  final VoidCallback func;
-  const AddNewButton({super.key, required this.title, required this.func});
+   var func;
+   AddNewButton({super.key, required this.title, required this.func});
 
   @override
   Widget build(BuildContext context) {

@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
+import 'package:mineralflow/view/pages/special_smaple.dart';
 
-class SpecialDescriptionBox extends StatelessWidget {
+class SpecialDescriptionBox extends StatefulWidget {
   final String title;
-   SpecialDescriptionBox({super.key, required this.title});
+  SpecialDescriptionClass specialObj;
+  SpecialDescriptionBox({
+    super.key,
+    required this.title,
+    required this.specialObj,
+  });
 
+  @override
+  State<SpecialDescriptionBox> createState() => _SpecialDescriptionBoxState();
+}
 
+class _SpecialDescriptionBoxState extends State<SpecialDescriptionBox> {
+  TextEditingController descriptionController = TextEditingController();
+  TextEditingController detailsController = TextEditingController();
+  TextEditingController massController = TextEditingController();
 
-   TextEditingController descriptionController = TextEditingController();
-   TextEditingController massController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -33,7 +44,7 @@ class SpecialDescriptionBox extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(28.0),
-              child: Text(title, style: TextFonts.buttonTitles),
+              child: Text(widget.title, style: TextFonts.buttonTitles),
             ),
             Padding(
               padding: const EdgeInsets.only(top: 20.0),
@@ -50,7 +61,10 @@ class SpecialDescriptionBox extends StatelessWidget {
                         width: 292,
                         height: 66,
                         child: TextField(
-                        controller: descriptionController,
+                          controller: descriptionController,
+                          onChanged: (value) {
+                            widget.specialObj.description = value;
+                          },
                           style: TextStyle(
                             color: Colours.text,
                             fontSize: 20,
@@ -68,7 +82,7 @@ class SpecialDescriptionBox extends StatelessWidget {
                             ),
 
                             suffixIcon: IconButton(
-                              onPressed: () {},
+                        onPressed: () => descriptionController.clear(),
                               icon: Icon(Icons.clear),
                             ),
                           ),
@@ -82,6 +96,14 @@ class SpecialDescriptionBox extends StatelessWidget {
                         height: 66,
                         child: TextField(
                           controller: massController,
+                          onChanged: (value) {
+                            try {
+                              double massValue = double.parse(value);
+                              widget.specialObj.mass = massValue;
+                            } catch (e) {
+                              throw("Error non numerical at special box ");
+                            }
+                          },
                           style: TextStyle(
                             color: Colours.text,
                             fontSize: 20,
@@ -99,7 +121,7 @@ class SpecialDescriptionBox extends StatelessWidget {
                             ),
 
                             suffixIcon: IconButton(
-                              onPressed: () {},
+                              onPressed: () => massController.clear(),
                               icon: Icon(Icons.clear),
                             ),
                           ),
@@ -111,7 +133,10 @@ class SpecialDescriptionBox extends StatelessWidget {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Text("Sample Details", style: TextFonts.buttonTitles4),
+                      Text(
+                        "Additional Details",
+                        style: TextFonts.buttonTitles4,
+                      ),
                       SizedBox(
                         width: 292, // Ensure consistent width
                         child: Container(
@@ -123,6 +148,9 @@ class SpecialDescriptionBox extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: TextField(
+                              onChanged: (value){
+                              widget.specialObj.details = value;
+                              },
                               decoration: InputDecoration(
                                 border: InputBorder.none,
                                 hintText: "Sample Description...",

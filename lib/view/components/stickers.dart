@@ -1,17 +1,19 @@
+import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:mineralflow/view/Constants/colors.dart';
+import 'package:mineralflow/models/sticker_model.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
 
 class Stickers extends StatelessWidget {
-  Stickers({super.key});
+    StickerModel stickerObj;
+  Stickers({super.key, required this.stickerObj });
 
   TextEditingController descriptionController = TextEditingController();
   TextEditingController massController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 364,
-      height: 190,
+      width: double.infinity,
+      height: 220,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(22)),
@@ -34,21 +36,19 @@ class Stickers extends StatelessWidget {
               children: [
                 SizedBox(
                 width: 200,
-                  height: 20,
-                  child: Image.asset("assets/images/barcode.png"),
+                  height: 70,
+                  child: BarcodeWidget(data: stickerObj.barcode, barcode: Barcode.code128()),
                 ),
-                Text("Feed", style: TextFonts.stickerTxt2),
+                Text(stickerObj.sampleDescription2, style: TextFonts.stickerTxt2),
               ],
             ),
             Row(
+            mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  flex: 3,
-                  child: Center(child: Text("2320981743", style: TextFonts.stickerTxt)),
-                ),
-                Expanded(
-                flex: 2,
-                  child: Text("Date:  12/02/2025", style: TextFonts.stickerTxt),
+               Text("Sample ID: ${stickerObj.id}", style: TextFonts.stickerTxt,), 
+                Padding(
+                  padding: const EdgeInsets.only(right: 10.0, left: 10),
+                  child: Text("Date:  ${stickerObj.date}", style: TextFonts.stickerTxt),
                 ),
               ],
             ),
@@ -57,20 +57,24 @@ class Stickers extends StatelessWidget {
             height: 80,
               child: Row(
                 children: [
-                  Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Plant: CHPP", style: TextFonts.stickerTxt),
-                      Text("Type: Routine Sample", style: TextFonts.stickerTxt),
-                      Text("Routine: 2 Hourly", style: TextFonts.stickerTxt),
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Plant: ${stickerObj.plant}", style: TextFonts.stickerTxt),
+                        Text("Type: ${stickerObj.type}", style: TextFonts.stickerTxt),
+                        Text("Routine: ${stickerObj.category}", style: TextFonts.stickerTxt),
+                      ],
+                    ),
                   ),
                   VerticalDivider(),
                   Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Mass: 8.92", style: TextFonts.stickerTxt),
-                      Text("Description: Pulp", style: TextFonts.stickerTxt),
-                      Text("Location: West Wing", style: TextFonts.stickerTxt),
+                      Text("Mass: ${stickerObj.mass}", style: TextFonts.stickerTxt),
+                      Text("Description: ${stickerObj.sampleDescription}", style: TextFonts.stickerTxt),
+                      Text("Location: ${stickerObj.location}", style: TextFonts.stickerTxt),
                     ],
                   ),
                 ],
