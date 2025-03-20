@@ -17,11 +17,19 @@ class TypeDetails extends StatefulWidget {
 }
 
 class _TypeDetailsState extends State<TypeDetails> {
-    TextEditingController controller = TextEditingController();
+  TextEditingController controller = TextEditingController();
 
+  bool smallScreen = false;
   @override
   Widget build(BuildContext context) {
+    //variables
     String option = "";
+
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
+    smallScreen = height < 940 ? true : false;
+
+    //functions
     Future openPopUp() => showDialog(
       context: context,
       builder:
@@ -44,6 +52,7 @@ class _TypeDetailsState extends State<TypeDetails> {
                     onPressed: () {
                       setState(() {
                         String textStr = controller.text;
+                        controller.clear();
                         for (var element in Data.batcheTypes) {
                           if (element.batchName == widget.batch.batchName) {
                             element.batchOptions!.add(textStr);
@@ -67,8 +76,6 @@ class _TypeDetailsState extends State<TypeDetails> {
       );
     }
 
-    final width = MediaQuery.sizeOf(context).width;
-    final height = MediaQuery.sizeOf(context).height;
     return Scaffold(
       backgroundColor: Colours.mainBg,
       appBar: Appbar(),
@@ -76,7 +83,7 @@ class _TypeDetailsState extends State<TypeDetails> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 80.0),
+              padding: EdgeInsets.only(top: smallScreen ? 20 : 80.0),
               child: Text(
                 "Select ${widget.batch.batchName}",
                 style: TextFonts.titles,
@@ -90,20 +97,35 @@ class _TypeDetailsState extends State<TypeDetails> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 70),
+                        SizedBox(height: smallScreen ? 10 : 70),
                         SizedBox(
-                          width: width * 0.6,
-                          height: height * 0.5,
+                          width: width * 0.8,
+                          height: smallScreen? height * 0.38 :height * 0.5,
                           child: SingleChildScrollView(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children:
-                                  widget.batch.batchOptions?.map((option) {
-                                    return Column(
-                                      children: [TypesButton(text: option)],
-                                    );
-                                  }).toList() ??
-                                  [], // Handle null case safely
+                            child: GridView.builder(
+                              shrinkWrap:
+                                  true, // Ensures it takes only needed space inside SingleChildScrollView
+                              physics:
+                                  NeverScrollableScrollPhysics(), // Prevents GridView from scrolling separately
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount:
+                                        3, // Adjust for your layout needs
+                                    crossAxisSpacing:
+                                        10, // Space between columns
+                                    mainAxisSpacing: 10, // Space between rows
+                                    childAspectRatio:
+                                        3, // Adjust aspect ratio as needed
+                                  ),
+                              itemCount: widget.batch.batchOptions?.length ?? 0,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: smallScreen? EdgeInsets.only(left: 10, right: 10)  :  EdgeInsets.only(left: 10, right: 10),
+                                  child: TypesButton(
+                                    text: widget.batch.batchOptions![index],
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -111,19 +133,17 @@ class _TypeDetailsState extends State<TypeDetails> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Center(
-                    child: SizedBox(
-                      width: 300,
-                      child: AddNewButton(
-                        title: "Add New ${widget.batch.batchName}",
-                        func: openPopUp,
-                      ),
+              ],
+            ),
+                Center(
+                  child: SizedBox(
+                    width: smallScreen ? 250 : 300,
+                    child: AddNewButton(
+                      title: "New ${widget.batch.batchName}",
+                      func: openPopUp,
                     ),
                   ),
                 ),
-              ],
-            ),
           ],
         ),
       ),

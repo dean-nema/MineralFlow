@@ -7,11 +7,14 @@ import 'package:mineralflow/view/components/box_text2_btn.dart';
 import 'package:mineralflow/view/pages/category.dart';
 
 class BatchType extends StatelessWidget {
-  const BatchType({super.key});
+   BatchType({super.key});
 
+  bool smallScreen = false;
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
+    final height = MediaQuery.sizeOf(context).height;
+    smallScreen = height < 800 ? true : false;
     return Scaffold(
       backgroundColor: Colours.mainBg,
       appBar: Appbar(),
@@ -19,13 +22,13 @@ class BatchType extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 80.0),
+              padding:  EdgeInsets.only(top: smallScreen?20: 80.0),
               child: Text("Select Batch Type", style: TextFonts.titles),
             ),
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 140),
+                 SizedBox(height: smallScreen? 100: 140),
                 SizedBox(
                   width: width * 0.6,
                   child: Row(
@@ -39,7 +42,7 @@ class BatchType extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 130),
+                SizedBox(height: smallScreen? 30: 130),
                 Container(
                   width: 180,
                   height: 80,
@@ -57,7 +60,7 @@ class BatchType extends StatelessWidget {
                   ),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colours.btn, // Background color
+                      backgroundColor: Colours.border, // Background color
                       foregroundColor:
                           Colors
                               .transparent, // Prevents ripple color interference

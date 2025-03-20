@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/plant_details_model.dart';
+import 'package:mineralflow/strings/strings.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
 import 'package:mineralflow/view/components/app_bar.dart';
@@ -19,6 +21,11 @@ class PlantDetails extends StatefulWidget {
 class _PlantDetailsState extends State<PlantDetails> {
   final List<bool> _selections = [false, false];
   TextEditingController location = TextEditingController();
+
+  bool smallScreen = false;
+
+
+  //functions
   void showSnackBar(BuildContext context) {
     final snackBar = SnackBar(
       content: Text('Plant option not selected or Location not entered'),
@@ -42,6 +49,10 @@ class _PlantDetailsState extends State<PlantDetails> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
+    final height = MediaQuery.sizeOf(context).height;
+    smallScreen = height < 900 ? true : false;
+
+    //functions
     void func() {
       String locationStr = location.text;
       var model = Data.getBatchByID();
@@ -55,14 +66,15 @@ class _PlantDetailsState extends State<PlantDetails> {
           } else {
             model.plant = PlantDetailsModel("CWP", locationStr, null);
           }
+          print("${Data.selectedBatchType}");
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder:
                   (context) =>
-                      Data.selectedBatchType!.batchName == "Special Sample" ||
+                      Data.selectedBatchType?.batchName == "Special Sample" ||
                               Data.getBatchByID()!.category!.categoryName ==
-                                  "GEOLOGY SAMPLE"
+                                  Strings.geologySample
                           ? SpecialSmaple()
                           : TypeDetails(batch: Data.selectedBatchType!),
             ),
@@ -89,7 +101,7 @@ class _PlantDetailsState extends State<PlantDetails> {
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 100),
+                 SizedBox(height: smallScreen?20: 100),
                 ToggleButtons(
                   isSelected: _selections,
 
@@ -110,7 +122,7 @@ class _PlantDetailsState extends State<PlantDetails> {
                       padding: const EdgeInsets.all(28.0),
                       child: Container(
                         width: 250,
-                        height: 150,
+                        height: smallScreen? 70: 150,
                         decoration: BoxDecoration(
                           color: _selections[0] ? Colours.border : Colours.bg2,
                           borderRadius: BorderRadius.all(Radius.circular(22)),
@@ -138,7 +150,7 @@ class _PlantDetailsState extends State<PlantDetails> {
                       padding: const EdgeInsets.all(28.0),
                       child: Container(
                         width: 250,
-                        height: 150,
+                        height: smallScreen? 70: 150,
                         decoration: BoxDecoration(
                           color: _selections[1] ? Colours.border : Colours.bg2,
                           borderRadius: BorderRadius.all(Radius.circular(22)),
@@ -164,10 +176,10 @@ class _PlantDetailsState extends State<PlantDetails> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 80),
+                 SizedBox(height: smallScreen? 20: 80),
                 SizedBox(
                   width: width * 0.3,
-                  height: 100,
+                  height: 140,
                   child: TextField(
                     controller: location,
                     style: TextStyle(
@@ -190,7 +202,7 @@ class _PlantDetailsState extends State<PlantDetails> {
                         fontWeight: FontWeight.bold,
                       ),
                       border: OutlineInputBorder(
-                        borderSide: BorderSide.none,
+                        borderSide: BorderSide(color: Colours.border),
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
                       ),
                       suffixIcon: IconButton(
@@ -202,7 +214,7 @@ class _PlantDetailsState extends State<PlantDetails> {
                   ),
                 ),
 
-                const SizedBox(height: 60),
+                 SizedBox(height: smallScreen? 10: 60),
                 Row(
                   children: [
                     Expanded(
@@ -230,7 +242,7 @@ class _PlantDetailsState extends State<PlantDetails> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    Colours.btn, // Background color
+                                    Colours.border, // Background color
                                 foregroundColor:
                                     Colors
                                         .transparent, // Prevents ripple color interference
@@ -269,7 +281,7 @@ class _PlantDetailsState extends State<PlantDetails> {
 
                           SizedBox(
                             width: 200, // Rectangular width
-                            height: 100, // Rectangular height
+                            height: 80, // Rectangular height
                             child: ElevatedButton(
                               onPressed: func,
                               style: ElevatedButton.styleFrom(

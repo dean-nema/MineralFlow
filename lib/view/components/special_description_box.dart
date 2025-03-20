@@ -21,11 +21,16 @@ class _SpecialDescriptionBoxState extends State<SpecialDescriptionBox> {
   TextEditingController detailsController = TextEditingController();
   TextEditingController massController = TextEditingController();
 
+  bool smallScreen = false;
   @override
   Widget build(BuildContext context) {
+          final height = MediaQuery.sizeOf(context).height;
+    smallScreen = height < 900 ? true : false;
+
+
     return Container(
-      width: 730,
-      height: 415,
+      width: smallScreen? 650: 730,
+      height: smallScreen? 370: 415,
       decoration: BoxDecoration(
         color: Colours.btn,
         borderRadius: BorderRadius.all(Radius.circular(22)),

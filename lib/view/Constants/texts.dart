@@ -27,6 +27,10 @@ class TextFonts {
    color: Colours.text,
    fontSize:  60,
   );
+  static TextStyle titles2 = GoogleFonts.poppins( 
+   color: Colours.text,
+   fontSize:  30,
+  );
    static TextStyle titlesAppBar = GoogleFonts.poppins( 
    color: Colours.text,
    fontSize:  20,

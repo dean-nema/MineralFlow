@@ -13,7 +13,7 @@ class PrintBtn extends StatelessWidget {
       width: 280,
       height: 130,
       decoration: BoxDecoration(
-        color: Colours.btn,
+        color: Colours.border,
         borderRadius: BorderRadius.all(Radius.circular(22)),
         boxShadow: [
           BoxShadow(
@@ -26,7 +26,7 @@ class PrintBtn extends StatelessWidget {
       ),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colours.btn, // Background color
+          backgroundColor: Colours.border, // Background color
           foregroundColor:
               Colors.transparent, // Prevents ripple color interference
           padding: EdgeInsets.zero, // Remove default padding

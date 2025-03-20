@@ -8,12 +8,15 @@ import 'package:mineralflow/view/components/stickers.dart';
 import 'package:mineralflow/view/pages/registered_sample.dart';
 
 class SampleStickers extends StatelessWidget {
-  const SampleStickers({super.key});
+   SampleStickers({super.key});
+  bool smallScreen = false;
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final height = MediaQuery.sizeOf(context).height;
+        smallScreen = height < 700 ? true : false;
+
     return Scaffold(
       backgroundColor: Colours.mainBg,
       appBar: Appbar(),
@@ -22,7 +25,7 @@ class SampleStickers extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              Expanded(child: Text("Sample Stickers", style: TextFonts.titles)),
+              Text("Sample Stickers", style: TextFonts.titles),
               Expanded(
                 flex: 5,
                 child: SizedBox(
@@ -47,7 +50,9 @@ class SampleStickers extends StatelessWidget {
                   ),
                 ),
               ),
-              Expanded(
+              SizedBox(
+              width: 200,
+              height: 100,
                 child: PrintBtn(
                   title: "Print Stickers",
                   func: () {
