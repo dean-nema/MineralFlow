@@ -24,12 +24,16 @@ class _TypeDetailsState extends State<TypeDetails> {
   Widget build(BuildContext context) {
     //variables
     String option = "";
-
+    
+ 
+    
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
     smallScreen = height < 940 ? true : false;
 
     //functions
+ 
+    
     Future openPopUp() => showDialog(
       context: context,
       builder:
@@ -69,6 +73,7 @@ class _TypeDetailsState extends State<TypeDetails> {
           ),
     );
     void func() {
+      
       print(option);
       Navigator.push(
         context,

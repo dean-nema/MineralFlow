@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/Constants/texts.dart';
 import 'package:mineralflow/view/pages/batch_sample.dart';
+import 'package:mineralflow/view/pages/request_page.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -17,7 +18,7 @@ class _SplashState extends State<Splash> {
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const BatchSample()),
+        MaterialPageRoute(builder: (context) =>  RequestPage()),
       );
     });
   }

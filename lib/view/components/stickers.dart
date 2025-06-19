@@ -62,9 +62,9 @@ class Stickers extends StatelessWidget {
                     child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Plant: ${stickerObj.plant}", style: TextFonts.stickerTxt),
-                        Text("Type: ${stickerObj.type}", style: TextFonts.stickerTxt),
-                        Text("Routine: ${stickerObj.category}", style: TextFonts.stickerTxt),
+                        Text("Plant: ${stickerObj.plant}", style: TextFonts.stickerTxt, overflow: TextOverflow.ellipsis,),
+                        Text("Type: ${stickerObj.type}", style: TextFonts.stickerTxt,  overflow: TextOverflow.ellipsis),
+                        Text("Routine: ${stickerObj.category}", style: TextFonts.stickerTxt,  overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
