@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mineralflow/data/data.dart';
-import 'package:mineralflow/models/batch_model.dart'; // Make sure this path is correct
+import 'package:mineralflow/models/batch_model.dart';
+import 'package:mineralflow/view/pages/recipient_display.dart';
+import 'package:mineralflow/view/pages/sample_list.dart'; // Make sure this path is correct
 
 /// A helper class to manage the status of each individual analysis task.
 class TaskStatus {
   final String name;
   int numberOfSamples = 0;
-  String status;
+  int pending;
+  int complete;
+  int inProgress;
 
   TaskStatus({
     required this.name,
-    required this.status,
+    required this.pending,
+    required this.complete,
+    required this.inProgress,
     required this.numberOfSamples,
   });
 }
@@ -30,48 +36,19 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
   late List<TaskStatus> _taskStatuses;
 
   // Options for the dropdowns
-  final List<String> _batchStatusOptions = [
-    'Active',
-    'onHold',
-    'Finalized',
-    'Pending',
-    'Cancelled',
-  ];
-  final List<String> _taskStatusOptions = [
-    'Pending',
-    'In Progress',
-    'Complete',
-  ];
-  final List<String> _priorityOptions = ['Normal', 'High', 'Urgent'];
-  // --- NEW: Demo data for the personnel dropdown ---
-  final List<String> _personnelOptions = [
-    'Unassigned',
-    'John Doe',
-    'Jane Smith',
-    'Peter Jones',
-    'Emily White',
-  ];
+  final List<String> _batchStatusOptions = Data.statusOptions;
+  final List<String> _taskStatusOptions = Data.taskStatusOptions;
+  final List<String> _priorityOptions = Data.priorityOptions;
+  final List<String> _personnelOptions = Data.personnelOptions;
 
   @override
   void initState() {
+    super.initState();
     _currentBatch = widget.batch;
-    // Convert the list of task strings into a list of manageable TaskStatus objects
     _taskStatuses = Data.getBatchStats(widget.batch);
   }
 
-  /// Returns a color based on the task status for UI feedback.
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Complete':
-        return Colors.green.withOpacity(0.2);
-      case 'In Progress':
-        return Colors.orange.withOpacity(0.2);
-      case 'Pending':
-      default:
-        return Colors.grey.withOpacity(0.2);
-    }
-  }
-
+  // --- HELPER FUNCTIONS ---
   String _priorityDoubleToString(double? priority) {
     if (priority == 1.0) return 'Urgent';
     if (priority == 2.0) return 'High';
@@ -102,10 +79,8 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left Panel: Batch Information and Actions
             _buildInfoPanel(),
             const SizedBox(width: 20),
-            // Right Panel: Analysis Tasks Table
             Expanded(child: _buildTasksTablePanel()),
           ],
         ),
@@ -113,7 +88,6 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
     );
   }
 
-  /// Builds the information and action panel on the left.
   Widget _buildInfoPanel() {
     return Container(
       width: 350,
@@ -126,7 +100,6 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
       ),
       child: Column(
         children: [
-          // Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16.0),
@@ -146,23 +119,25 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
               ),
             ),
           ),
-          // Details
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildInfoRow("Batch Order:", _currentBatch.batchOrder),
+                _buildInfoRow("Batch Submitter:", _currentBatch.submitter),
                 _buildStatusDropdown(
                   "Status:",
                   _currentBatch.status ?? 'Pending',
                 ),
-                // --- MODIFIED: Person Assigned is now a dropdown ---
                 _buildPersonnelDropdown(
                   "Assigned Personal:",
                   _currentBatch.assignedPersonal,
                 ),
-                _buildInfoRow("Batch Location:", _currentBatch.batchLocation),
+                _buildInfoRow(
+                  "Batch Location:",
+                  _currentBatch.batchLocation ?? "Not Yet",
+                ),
                 _buildInfoRow(
                   "Receiving Date:",
                   DateFormat(
@@ -175,16 +150,31 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
                 ),
                 _buildPriorityDropdown("Priority:", _currentBatch.priority),
                 const Divider(height: 32),
-                // Action Buttons
                 _buildActionButton(
                   icon: Icons.science_outlined,
                   label: "View Samples",
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => SampleListPage(batch: widget.batch),
+                      ),
+                    );
+                  },
                 ),
                 _buildActionButton(
                   icon: Icons.people_outline,
                   label: "View Recipients",
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => RecipientsPage(batch: widget.batch),
+                      ),
+                    );
+                  },
                 ),
                 _buildActionButton(
                   icon: Icons.description_outlined,
@@ -205,7 +195,6 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
     );
   }
 
-  /// Builds the main analysis tasks table panel.
   Widget _buildTasksTablePanel() {
     return Container(
       decoration: BoxDecoration(
@@ -232,35 +221,31 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
                     color: Colors.black87,
                   ),
                   columnSpacing: 30,
+                  // New column structure
                   columns: const [
                     DataColumn(label: Text('Method Analysis')),
-                    DataColumn(label: Text('Number of Samples')),
-                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Number of Samples'), numeric: true),
+                    DataColumn(label: Text('Pending'), numeric: true),
+                    DataColumn(label: Text('In-Progress'), numeric: true),
+                    DataColumn(label: Text('Complete'), numeric: true),
                   ],
+                  // New row structure based on the task's single status
                   rows:
                       _taskStatuses.map((task) {
+                        final totalSamples = task.numberOfSamples.toString();
+
                         return DataRow(
                           cells: [
                             DataCell(Text(task.name)),
+                            DataCell(Center(child: Text(totalSamples))),
                             DataCell(
-                              Center(
-                                child: Text(
-                                  _currentBatch.numOfSamples().toString(),
-                                ),
-                              ),
+                              Center(child: Text(task.pending.toString())),
                             ),
                             DataCell(
-                              // Dropdown for changing status directly in the table
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(task.status),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(task.status),
-                              ),
+                              Center(child: Text(task.inProgress.toString())),
+                            ),
+                            DataCell(
+                              Center(child: Text(task.complete.toString())),
                             ),
                           ],
                         );
@@ -274,8 +259,7 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
     );
   }
 
-  // --- HELPER WIDGETS ---
-
+  // --- HELPER WIDGETS (Unchanged) ---
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -318,17 +302,17 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
                 ),
               ),
               items:
-                  _batchStatusOptions.map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
+                  _batchStatusOptions
+                      .map(
+                        (String value) => DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        ),
+                      )
+                      .toList(),
               onChanged: (String? newValue) {
                 if (newValue != null) {
-                  setState(() {
-                    _currentBatch.status = newValue;
-                  });
+                  setState(() => _currentBatch.status = newValue);
                 }
               },
             ),
@@ -363,16 +347,21 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
                 ),
               ),
               items:
-                  _priorityOptions.map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
+                  _priorityOptions
+                      .map(
+                        (String value) => DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        ),
+                      )
+                      .toList(),
               onChanged: (String? newValue) {
-                setState(() {
-                  _currentBatch.priority = _priorityStringToDouble(newValue);
-                });
+                setState(
+                  () =>
+                      _currentBatch.priority = _priorityStringToDouble(
+                        newValue,
+                      ),
+                );
               },
             ),
           ),
@@ -381,7 +370,6 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
     );
   }
 
-  // --- NEW: Helper to create the personnel dropdown ---
   Widget _buildPersonnelDropdown(String label, String? currentValue) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -394,7 +382,6 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
           const SizedBox(width: 8),
           Expanded(
             child: DropdownButtonFormField<String>(
-              // Handle null by showing 'Unassigned'
               value: currentValue ?? 'Unassigned',
               isExpanded: true,
               decoration: InputDecoration(
@@ -408,16 +395,16 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
                 ),
               ),
               items:
-                  _personnelOptions.map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
+                  _personnelOptions
+                      .map(
+                        (String value) => DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        ),
+                      )
+                      .toList(),
               onChanged: (String? newValue) {
                 setState(() {
-                  // If 'Unassigned' is selected, set the model's value to null
-                  // Otherwise, set it to the selected name.
                   if (newValue == 'Unassigned') {
                     _currentBatch.assignedPersonal = null;
                   } else {
@@ -450,15 +437,10 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
             backgroundColor: color,
             foregroundColor: color == null ? null : Colors.white,
             alignment: Alignment.centerLeft,
-            minimumSize: const Size(
-              double.infinity,
-              50,
-            ), // Set a minimum height
+            minimumSize: const Size(double.infinity, 50),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(
-                8.0,
-              ), // Slightly less rounded corners
+              borderRadius: BorderRadius.circular(8.0),
             ),
           ),
         ),

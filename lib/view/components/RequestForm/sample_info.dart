@@ -10,14 +10,14 @@ class SampleInfo extends StatefulWidget {
   TextEditingController amount;
   TextEditingController submitter;
   TextEditingController projectName;
-  TextEditingController batchLocation;
+  // TextEditingController batchLocation;
   String? classification;
   SampleInfo({
     super.key,
     required this.document,
     required this.projectName,
     required this.submitter,
-    required this.batchLocation,
+    // required this.batchLocation,
     required this.amount,
     required this.classification,
   });
@@ -314,51 +314,51 @@ class _SampleInfoState extends State<SampleInfo> {
                 ),
               ),
 
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  // 3. This aligns "Submitter Name" and the TextField to the left
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Batch Location",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 400,
-                      child: TextField(
-                        controller: widget.batchLocation,
-                        decoration: InputDecoration(
-                          // 5. A grey label that starts at the left
-                          hintText: 'Enter Batch Location',
-                          // 6. Label style with font size 18
-                          labelStyle: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 18,
-                          ),
-                          // 4. blueGrey background color
-                          fillColor: Colors.blueGrey[50],
-                          filled: true,
-                          // 7. Round corners for the text field
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                            // Hides the border line to show only the filled color
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15.0,
-                            horizontal: 20.0,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.all(10.0),
+              //   child: Column(
+              //     // 3. This aligns "Submitter Name" and the TextField to the left
+              //     crossAxisAlignment: CrossAxisAlignment.start,
+              //     children: [
+              //       const Text(
+              //         "Batch Location",
+              //         style: TextStyle(
+              //           fontSize: 18,
+              //           fontWeight: FontWeight.bold,
+              //         ),
+              //       ),
+              //       // const SizedBox(height: 8),
+              //       // Container(
+              //       //   width: 400,
+              //       //   child: TextField(
+              //       //     controller: widget.batchLocation,
+              //       //     decoration: InputDecoration(
+              //       //       // 5. A grey label that starts at the left
+              //       //       hintText: 'Enter Batch Location',
+              //       //       // 6. Label style with font size 18
+              //       //       labelStyle: TextStyle(
+              //       //         color: Colors.grey[600],
+              //       //         fontSize: 18,
+              //       //       ),
+              //       //       // 4. blueGrey background color
+              //       //       fillColor: Colors.blueGrey[50],
+              //       //       filled: true,
+              //       //       // 7. Round corners for the text field
+              //       //       border: OutlineInputBorder(
+              //       //         borderRadius: BorderRadius.circular(15.0),
+              //       //         // Hides the border line to show only the filled color
+              //       //         borderSide: BorderSide.none,
+              //       //       ),
+              //       //       contentPadding: const EdgeInsets.symmetric(
+              //       //         vertical: 15.0,
+              //       //         horizontal: 20.0,
+              //       //       ),
+              //       //     ),
+              //       //   ),
+              //       // ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
 

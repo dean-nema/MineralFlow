@@ -24,23 +24,20 @@ class _RequestPageState extends State<RequestPage> {
   final TextEditingController amount = TextEditingController();
   final TextEditingController submitter = TextEditingController();
   final TextEditingController projectName = TextEditingController();
-  final TextEditingController batchLocation = TextEditingController();
+  // final TextEditingController batchLocation = TextEditingController();
 
   String? _selectedClassification;
 
-  final List<String> _classifications = [
-    'Process Plant',
-    'Channel Sample',
-    'Special Sample',
-  ];
+  final List<String> _classifications = Data.classifications;
+
   PlatformFile? _selectedFile;
   //Functions
   bool areAllFieldsFilled() {
     return amount.text.isNotEmpty &&
         submitter.text.isNotEmpty &&
         Data.type != null &&
-        projectName.text.isNotEmpty &&
-        batchLocation.text.isNotEmpty;
+        projectName.text.isNotEmpty;
+    //  && batchLocation.text.isNotEmpty;
   }
 
   // 3. Logic to open the file picker and handle the result
@@ -67,12 +64,7 @@ class _RequestPageState extends State<RequestPage> {
   late Map<String, bool> _selectedReportOptions;
 
   // The list of options is needed to initialize the map.
-  final List<String> _reportOptions = const [
-    'PDF Certificate',
-    'Result CSV',
-    'QC Performance',
-    'TAT Performance',
-  ];
+  final List<String> _reportOptions = Data.reportOptions;
 
   @override
   void initState() {
@@ -124,7 +116,7 @@ class _RequestPageState extends State<RequestPage> {
                   amount: amount,
                   submitter: submitter,
                   projectName: projectName,
-                  batchLocation: batchLocation,
+                  // batchLocation: batchLocation,
                   classification: _selectedClassification,
                 ),
 
@@ -152,7 +144,9 @@ class _RequestPageState extends State<RequestPage> {
                             int tempBatchId = Data.randomNumGenerator(5);
                             String batchOrder = "MCM$tempBatchId";
                             DateTime date = Data.date;
-                            List<String> tasks = Data.analyticsTasks.toList();
+                            List<String> tasks =
+                                Data.analyticsTasks.toList() +
+                                Data.samplePrepOptions.toList();
                             List<RecepientsModel> recepients =
                                 Data.convertRecepients();
                             //create batch
@@ -168,7 +162,7 @@ class _RequestPageState extends State<RequestPage> {
                               tasks: tasks,
                               recepients: recepients,
                               project: projectName.text,
-                              batchLocation: batchLocation.text,
+                              batchLocation: Data.firstStage,
                               batchOrder: batchOrder,
                               samples: samples,
                               status: "Pending",

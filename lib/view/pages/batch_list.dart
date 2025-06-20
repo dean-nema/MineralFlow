@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/batch_model.dart';
+import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/pages/batch_details.dart';
+import 'package:mineralflow/view/pages/create_run.dart';
 import 'package:mineralflow/view/pages/request_page.dart';
 // Make sure to import your Batch model and Request Page
 // import 'package:mineralflow/view/pages/request_page.dart';
@@ -30,12 +32,7 @@ class _BatchListPageState extends State<BatchListPage> {
   DateTime? _startDateFilter;
   DateTime? _endDateFilter;
 
-  final List<String> _statusOptions = [
-    'Active',
-    'onHold',
-    'Finalized',
-    'Pending',
-  ];
+  final List<String> _statusOptions = Data.statusOptions;
 
   @override
   void initState() {
@@ -257,139 +254,187 @@ class _BatchListPageState extends State<BatchListPage> {
   }
 
   Widget _buildDataTablePanel() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(
-                    Colors.blueGrey[100],
-                  ),
-                  headingTextStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  columnSpacing: 30,
-                  columns: const [
-                    DataColumn(label: Text('Seq#')),
-                    DataColumn(label: Text('Client Code')),
-                    DataColumn(label: Text('Batch Code')),
-                    DataColumn(label: Text('Project')),
-                    DataColumn(label: Text('Date')),
-                    DataColumn(label: Text('Age')),
-                    DataColumn(label: Text('Person Assigned')),
-                    DataColumn(label: Text('# of Samples')),
-                    DataColumn(label: Text('Status')),
-                    DataColumn(label: Text('Batch Info')),
-                  ],
-                  rows:
-                      _filteredBatches.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final batch = entry.value;
-                        final age = batch.getAge();
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                    child: DataTable(
+                      headingRowColor: MaterialStateProperty.all(
+                        Colors.blueGrey[100],
+                      ),
+                      headingTextStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      columnSpacing: 30,
+                      columns: const [
+                        DataColumn(label: Text('Seq#')),
+                        DataColumn(label: Text('Client Code')),
+                        DataColumn(label: Text('Batch Code')),
+                        DataColumn(label: Text('Project')),
+                        DataColumn(label: Text('Date')),
+                        DataColumn(label: Text('Age')),
+                        DataColumn(label: Text('Person Assigned')),
+                        DataColumn(label: Text('# of Samples')),
+                        DataColumn(label: Text('Status')),
+                        DataColumn(label: Text('Batch Info')),
+                      ],
+                      rows:
+                          _filteredBatches.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final batch = entry.value;
+                            final age = batch.getAge();
 
-                        return DataRow(
-                          color: MaterialStateProperty.resolveWith<Color?>((
-                            states,
-                          ) {
-                            return index.isEven
-                                ? Colors.grey.withOpacity(0.12)
-                                : null;
-                          }),
-                          cells: [
-                            DataCell(Text((index + 1).toString())),
-                            DataCell(Text(batch.getClientCode())),
-                            DataCell(Text(batch.batchOrder)),
-                            DataCell(Text(batch.project)),
-                            DataCell(
-                              Text(
-                                DateFormat(
-                                  'dd/MM/yyyy',
-                                ).format(batch.receivingDate),
-                              ),
-                            ),
-                            DataCell(Text(age.toString())),
-                            DataCell(
-                              Text(batch.assignedPersonal ?? "Unassigned"),
-                            ),
-                            DataCell(
-                              Center(
-                                child: Text(batch.samples.length.toString()),
-                              ),
-                            ),
-                            DataCell(
-                              DropdownButton<String>(
-                                value: batch.status,
-                                underline: Container(),
-                                items:
-                                    _statusOptions.map((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) {
-                                    setState(() {
-                                      final originalBatch = _allBatches
-                                          .firstWhere(
-                                            (b) =>
-                                                b.batchOrder ==
-                                                batch.batchOrder,
+                            return DataRow(
+                              color: MaterialStateProperty.resolveWith<Color?>((
+                                states,
+                              ) {
+                                return index.isEven
+                                    ? Colors.grey.withOpacity(0.12)
+                                    : null;
+                              }),
+                              cells: [
+                                DataCell(Text((index + 1).toString())),
+                                DataCell(Text(batch.getClientCode())),
+                                DataCell(Text(batch.batchOrder)),
+                                DataCell(Text(batch.project)),
+                                DataCell(
+                                  Text(
+                                    DateFormat(
+                                      'dd/MM/yyyy',
+                                    ).format(batch.receivingDate),
+                                  ),
+                                ),
+                                DataCell(Text(age.toString())),
+                                DataCell(
+                                  Text(batch.assignedPersonal ?? "Unassigned"),
+                                ),
+                                DataCell(
+                                  Center(
+                                    child: Text(
+                                      batch.samples.length.toString(),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  DropdownButton<String>(
+                                    value: batch.status,
+                                    underline: Container(),
+                                    items:
+                                        _statusOptions.map((String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value),
                                           );
-                                      originalBatch.status = newValue;
-                                      batch.status = newValue;
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                            DataCell(
-                              ElevatedButton(
-                                child: const Text('View Batch'),
-                                onPressed: () {
-                                  // TODO: Navigate to the sample registry page for this batch
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => BatchOrderDetailsPage(
-                                            batch: batch,
-                                          ),
-                                    ),
-                                  );
+                                        }).toList(),
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          final originalBatch = _allBatches
+                                              .firstWhere(
+                                                (b) =>
+                                                    b.batchOrder ==
+                                                    batch.batchOrder,
+                                              );
+                                          originalBatch.status = newValue;
+                                          batch.status = newValue;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                                DataCell(
+                                  ElevatedButton(
+                                    child: const Text('View Batch'),
+                                    onPressed: () {
+                                      // TODO: Navigate to the sample registry page for this batch
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) =>
+                                                  BatchOrderDetailsPage(
+                                                    batch: batch,
+                                                  ),
+                                        ),
+                                      );
 
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Viewing batch: ${batch.batchOrder}',
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                ),
-              ),
-            );
-          },
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Viewing batch: ${batch.batchOrder}',
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
-      ),
+        SizedBox(
+          width: 200, // Rectangular width
+          height: 100, // Rectangular height
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CreateRunPage()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colours.border, // Green background
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+              padding: EdgeInsets.zero, // Remove default padding
+              elevation: 0, // No shadow
+              side: BorderSide.none, // Explicitly remove border
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center, // Center the content
+              children: const [
+                Text(
+                  "Proceed",
+                  style: TextStyle(
+                    color: Colors.white, // White text for contrast
+                    fontSize: 16,
+                  ),
+                ),
+                SizedBox(width: 8), // Space between text and arrow
+                Icon(
+                  Icons.arrow_forward, // Next arrow
+                  color: Colors.white, // White arrow for contrast
+                  size: 50,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

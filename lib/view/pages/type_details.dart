@@ -24,16 +24,13 @@ class _TypeDetailsState extends State<TypeDetails> {
   Widget build(BuildContext context) {
     //variables
     String option = "";
-    
- 
-    
+
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
     smallScreen = height < 940 ? true : false;
 
     //functions
- 
-    
+
     Future openPopUp() => showDialog(
       context: context,
       builder:
@@ -73,7 +70,6 @@ class _TypeDetailsState extends State<TypeDetails> {
           ),
     );
     void func() {
-      
       print(option);
       Navigator.push(
         context,
@@ -105,7 +101,7 @@ class _TypeDetailsState extends State<TypeDetails> {
                         SizedBox(height: smallScreen ? 10 : 70),
                         SizedBox(
                           width: width * 0.8,
-                          height: smallScreen? height * 0.38 :height * 0.5,
+                          height: smallScreen ? height * 0.38 : height * 0.5,
                           child: SingleChildScrollView(
                             child: GridView.builder(
                               shrinkWrap:
@@ -125,7 +121,13 @@ class _TypeDetailsState extends State<TypeDetails> {
                               itemCount: widget.batch.batchOptions?.length ?? 0,
                               itemBuilder: (context, index) {
                                 return Padding(
-                                  padding: smallScreen? EdgeInsets.only(left: 10, right: 10)  :  EdgeInsets.only(left: 10, right: 10),
+                                  padding:
+                                      smallScreen
+                                          ? EdgeInsets.only(left: 10, right: 10)
+                                          : EdgeInsets.only(
+                                            left: 10,
+                                            right: 10,
+                                          ),
                                   child: TypesButton(
                                     text: widget.batch.batchOptions![index],
                                   ),
@@ -140,15 +142,15 @@ class _TypeDetailsState extends State<TypeDetails> {
                 ),
               ],
             ),
-                Center(
-                  child: SizedBox(
-                    width: smallScreen ? 250 : 300,
-                    child: AddNewButton(
-                      title: "New ${widget.batch.batchName}",
-                      func: openPopUp,
-                    ),
-                  ),
+            Center(
+              child: SizedBox(
+                width: smallScreen ? 250 : 300,
+                child: AddNewButton(
+                  title: "New ${widget.batch.batchName}",
+                  func: openPopUp,
                 ),
+              ),
+            ),
           ],
         ),
       ),

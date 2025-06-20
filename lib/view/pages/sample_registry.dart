@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/data/sample_row.dart';
 import 'package:mineralflow/models/batch_model.dart';
 import 'package:mineralflow/view/pages/batch_list.dart';
@@ -14,7 +15,7 @@ class SampleRegistryPage extends StatefulWidget {
 
 class _SampleRegistryPageState extends State<SampleRegistryPage> {
   List<SampleRow> _sampleRows = [];
-  final List<String> _sampleTypeOptions = ['Rock', 'Pulp', 'Percussion'];
+  final List<String> _sampleTypeOptions = Data.sampleTypeOptions;
 
   @override
   void initState() {
@@ -65,6 +66,7 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
     }
     for (var sample in widget.batch.samples) {
       if (sample.psd) {
+        widget.batch.tasks.add("Particle Size Distribution");
         sample.taskUpdate["Particle Size Distribution"] = "Pending";
       }
     }

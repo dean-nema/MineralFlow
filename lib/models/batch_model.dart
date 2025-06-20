@@ -10,7 +10,7 @@ class BatchModel {
   List<RecepientsModel> recepients;
   String project;
   double? priority;
-  String batchLocation;
+  String? batchLocation;
   String? assignedPersonal;
   String? status;
   String batchOrder;
@@ -26,7 +26,7 @@ class BatchModel {
     required this.project,
     this.status,
     this.priority,
-    required this.batchLocation,
+    this.batchLocation,
     this.assignedPersonal,
     required this.batchOrder,
     DateTime? receivingDate,

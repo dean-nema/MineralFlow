@@ -27,6 +27,10 @@ class _ReportDistrState extends State<ReportDistr> {
   void initState() {
     super.initState();
     // Start with one recipient when the widget is first created.
+    for (var recipient in Data.currentRecipients) {
+      recipient.nameController.clear();
+      recipient.emailController.clear();
+    }
     _addRecipient();
   }
 
@@ -34,8 +38,8 @@ class _ReportDistrState extends State<ReportDistr> {
   @override
   void dispose() {
     for (var recipient in Data.currentRecipients) {
-      recipient.nameController.dispose();
-      recipient.emailController.dispose();
+      recipient.nameController.clear();
+      recipient.emailController.clear();
     }
     super.dispose();
   }

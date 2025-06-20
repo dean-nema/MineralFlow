@@ -1,10 +1,9 @@
 import 'dart:math';
-
-import 'package:mineralflow/data/sample_row.dart';
 import 'package:mineralflow/models/batch_model.dart';
 import 'package:mineralflow/models/batch_samples_model.dart';
 import 'package:mineralflow/models/batch_types_model.dart';
 import 'package:mineralflow/models/recepients_model.dart';
+import 'package:mineralflow/models/run2_model.dart';
 import 'package:mineralflow/models/sample_model.dart';
 import 'package:mineralflow/models/sticker_model.dart';
 import 'package:mineralflow/view/components/RequestForm/DataModel/recepient.dart';
@@ -17,10 +16,62 @@ class Data {
   static int count = 3284;
   static int sampleCount = 31291;
   static DateTime date = DateTime.now();
+  //lists
+  static List<Run2Model> run2List = [];
   static List<BatchModel> batchList = [];
   static List<String> analyticsTasks = [];
   static List<Recipient> currentRecipients = [];
   static int batchOrderCount = 2000;
+  //constant values
+  static double crv1 = 0.012;
+  static int runCount = 3000;
+  static final List<String> samplePrepOptions = ['Crushing', 'Pulverization'];
+  static final List<String> analyticalSectionOptions = [
+    'Calorific Value',
+    'ISO Ash',
+    'ISO Moisture',
+    'ISO Volatile',
+    'Quick Ash',
+    'Sulfur',
+    'Phosphorus',
+    'Oil Analysis',
+    'Multi-Elemental',
+  ];
+  static final String firstStage = "Sample Prepa Floor";
+  static final List<String> personnelOptions = [
+    'Unassigned',
+    'John Doe',
+    'Jane Smith',
+    'Peter Jones',
+    'Emily White',
+  ];
+  static final List<String> priorityOptions = ['Normal', 'High', 'Urgent'];
+  static final List<String> taskStatusOptions = [
+    'Pending',
+    'In-Progress',
+    'Complete',
+  ];
+  static final List<String> statusOptions = [
+    'Active',
+    'onHold',
+    'Cancelled',
+    'Finalized',
+    'Pending',
+  ];
+
+  static final List<String> sampleTypeOptions = ['Rock', 'Pulp', 'Percussion'];
+  static final List<String> reportOptions = const [
+    'PDF Certificate',
+    'Result CSV',
+    'QC Performance',
+    'TAT Performance',
+  ];
+  static final List<String> classifications = [
+    'Process Plant',
+    'Channel Sample',
+    'Special Sample',
+  ];
+
   //previous
   static int batchIDCount = 0;
   static int sampleIDCount = 0;
@@ -35,55 +86,77 @@ class Data {
 
   //functions
   //---current
+  static String getInitials(String input) {
+    if (input.isEmpty) return '';
+    List<String> words = input.split(' ').where((s) => s.isNotEmpty).toList();
+    if (words.length == 1) return words[0][0].toUpperCase();
+    String initials = words.map((word) => word[0].toUpperCase()).join('');
+    return initials;
+  }
+
+  //get In-Progress, Pending, Complete
+  // static List<int> getSampleStats(BatchModel batch) {
+  //   int pending = 0;
+  //   int complete = 0;
+  //   int inProgress = 0;
+  //   for (var element in batch.samples) {
+  //     element.taskUpdate;
+  //   }
+  //   return [];
+  // }
+
   static List<TaskStatus> getBatchStats(BatchModel batch) {
     List<TaskStatus> tasks = [];
     int psdCount = 0;
-    for (var element in batch.tasks) {
-      print("Reached");
-      tasks.add(
-        TaskStatus(
-          name: element,
-          status: "Pending",
-          numberOfSamples: batch.samples.length,
-        ),
-      );
-    }
-    tasks.add(
-      TaskStatus(
-        name: "Pulverization",
-        status: "Pending",
-        numberOfSamples: batch.samples.length,
-      ),
-    );
-    tasks.add(
-      TaskStatus(
-        name: "Crushing",
-        status: "Pending",
-        numberOfSamples: batch.samples.length,
-      ),
-    );
-    for (var sample in batch.samples) {
-      for (var entry in sample.taskUpdate.entries) {
-        if (sample.psd && entry.value == "Particle Size Distribution") {
-          psdCount++;
-          break;
+    int pending = 0;
+    int complete = 0;
+    int inProgress = 0;
+    for (var task in batch.tasks) {
+      for (var sample in batch.samples) {
+        if (sample.taskUpdate[task] == "Pending") {
+          pending++;
+        } else if (sample.taskUpdate[task] == "Complete") {
+          complete++;
+        } else if (sample.taskUpdate[task] == "In-Progress") {
+          inProgress++;
         }
       }
+      tasks.add(
+        TaskStatus(
+          name: task,
+          pending: pending,
+          complete: complete,
+          inProgress: inProgress,
+          numberOfSamples: (pending + complete + inProgress),
+        ),
+      );
+      inProgress = 0;
+      pending = 0;
+      complete = 0;
     }
-    TaskStatus psdTask = TaskStatus(
-      name: "Particle Size Distribution",
-      status: "Pending",
-      numberOfSamples: psdCount,
-    );
-    tasks.add(psdTask);
-
+    // for (var sample in batch.samples) {
+    //   for (var entry in sample.taskUpdate.entries) {
+    //     if (sample.psd && entry.key == "Particle Size Distribution") {
+    //       psdCount++;
+    //       break;
+    //     }
+    //   }
+    // }
+    // TaskStatus psdTask = TaskStatus(
+    //   name: "Particle Size Distribution",
+    //   status: "Pending",
+    //   numberOfSamples: psdCount,
+    // );
+    // tasks.add(psdTask);
+    //
     return tasks;
   }
 
   static List<SampleModel> generateSamples(int amount) {
     List<SampleModel> samples = [];
     for (var i = 1; i <= amount; i++) {
-      int sampleCode = sampleCount + i;
+      sampleCount++;
+      int sampleCode = sampleCount;
       samples.add(SampleModel(sampleCode: sampleCode));
     }
     return samples;
@@ -114,7 +187,7 @@ class Data {
     bool value,
   ) {
     String selectedTask = options[index];
-    if (value) {
+    if (!value) {
       for (var task in analyticsTasks) {
         task == selectedTask ? analyticsTasks.remove(task) : null;
       }

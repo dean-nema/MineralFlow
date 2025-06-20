@@ -5,17 +5,7 @@ class TaskAssign extends StatelessWidget {
   TaskAssign({super.key});
   final List<String> samplePrepOptions = ['Crushing', 'Pulverization'];
 
-  final List<String> analyticalSectionOptions = [
-    'Calorific Value',
-    'ISO Ash',
-    'ISO Moisture',
-    'ISO Volatile',
-    'Quick Ash',
-    'Sulfur',
-    'Phosphorus',
-    'Oil Analysis',
-    'Multi-Elemental',
-  ];
+  final List<String> analyticalSectionOptions = Data.analyticalSectionOptions;
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
