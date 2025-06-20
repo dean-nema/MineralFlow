@@ -57,7 +57,7 @@ class BatchModel {
     int hours = difference.inHours;
     int days = difference.inDays;
 
-    return "$hours Hours";
+    return hours < 25 ? "$hours Hours" : "$days Days";
   }
 
   int numOfSamples() {

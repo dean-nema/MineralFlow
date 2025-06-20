@@ -6,8 +6,6 @@ import 'package:mineralflow/view/Constants/colors.dart';
 import 'package:mineralflow/view/pages/batch_details.dart';
 import 'package:mineralflow/view/pages/create_run.dart';
 import 'package:mineralflow/view/pages/request_page.dart';
-// Make sure to import your Batch model and Request Page
-// import 'package:mineralflow/view/pages/request_page.dart';
 
 class BatchListPage extends StatefulWidget {
   const BatchListPage({super.key});
@@ -28,7 +26,6 @@ class _BatchListPageState extends State<BatchListPage> {
   final TextEditingController _dateFilterController = TextEditingController();
 
   String? _statusFilter;
-  // --- MODIFIED: State for date range filter ---
   DateTime? _startDateFilter;
   DateTime? _endDateFilter;
 
@@ -71,7 +68,6 @@ class _BatchListPageState extends State<BatchListPage> {
                       _personAssignedFilterController.text.toLowerCase(),
                     ));
 
-            // --- MODIFIED: Logic for date range ---
             final dateMatch =
                 (_startDateFilter == null && _endDateFilter == null) ||
                 (batch.receivingDate.isAfter(
@@ -92,14 +88,12 @@ class _BatchListPageState extends State<BatchListPage> {
       _personAssignedFilterController.clear();
       _dateFilterController.clear();
       _statusFilter = null;
-      // --- MODIFIED: Clear date range ---
       _startDateFilter = null;
       _endDateFilter = null;
       _filteredBatches = List.from(_allBatches);
     });
   }
 
-  // --- MODIFIED: Shows a date range picker for the filter ---
   Future<void> _selectFilterDateRange(BuildContext context) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -253,181 +247,140 @@ class _BatchListPageState extends State<BatchListPage> {
     );
   }
 
+  /// --- MODIFIED: This method now correctly positions the button ---
   Widget _buildDataTablePanel() {
     return Column(
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                    child: DataTable(
-                      headingRowColor: MaterialStateProperty.all(
-                        Colors.blueGrey[100],
-                      ),
-                      headingTextStyle: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      columnSpacing: 30,
-                      columns: const [
-                        DataColumn(label: Text('Seq#')),
-                        DataColumn(label: Text('Client Code')),
-                        DataColumn(label: Text('Batch Code')),
-                        DataColumn(label: Text('Project')),
-                        DataColumn(label: Text('Date')),
-                        DataColumn(label: Text('Age')),
-                        DataColumn(label: Text('Person Assigned')),
-                        DataColumn(label: Text('# of Samples')),
-                        DataColumn(label: Text('Status')),
-                        DataColumn(label: Text('Batch Info')),
-                      ],
-                      rows:
-                          _filteredBatches.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final batch = entry.value;
-                            final age = batch.getAge();
+        // This Expanded widget is the key. It makes the table container
+        // take up all available vertical space.
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                      child: DataTable(
+                        headingRowColor: MaterialStateProperty.all(
+                          Colors.blueGrey[100],
+                        ),
+                        headingTextStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        columnSpacing: 30,
+                        columns: const [
+                          DataColumn(label: Text('Seq#')),
+                          DataColumn(label: Text('Client Code')),
+                          DataColumn(label: Text('Batch Code')),
+                          DataColumn(label: Text('Project')),
+                          DataColumn(label: Text('Date')),
+                          DataColumn(label: Text('Age')),
+                          DataColumn(label: Text('Person Assigned')),
+                          DataColumn(label: Text('# of Samples')),
+                          DataColumn(label: Text('Status')),
+                          DataColumn(label: Text('Batch Info')),
+                        ],
+                        rows:
+                            _filteredBatches.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final batch = entry.value;
+                              final age = batch.getAge();
 
-                            return DataRow(
-                              color: MaterialStateProperty.resolveWith<Color?>((
-                                states,
-                              ) {
-                                return index.isEven
-                                    ? Colors.grey.withOpacity(0.12)
-                                    : null;
-                              }),
-                              cells: [
-                                DataCell(Text((index + 1).toString())),
-                                DataCell(Text(batch.getClientCode())),
-                                DataCell(Text(batch.batchOrder)),
-                                DataCell(Text(batch.project)),
-                                DataCell(
-                                  Text(
-                                    DateFormat(
-                                      'dd/MM/yyyy',
-                                    ).format(batch.receivingDate),
-                                  ),
-                                ),
-                                DataCell(Text(age.toString())),
-                                DataCell(
-                                  Text(batch.assignedPersonal ?? "Unassigned"),
-                                ),
-                                DataCell(
-                                  Center(
-                                    child: Text(
-                                      batch.samples.length.toString(),
+                              return DataRow(
+                                color: MaterialStateProperty.resolveWith<Color?>((states) {
+                                  return index.isEven ? Colors.grey.withOpacity(0.12) : null;
+                                }),
+                                cells: [
+                                  DataCell(Text((index + 1).toString())),
+                                  DataCell(Text(batch.getClientCode())),
+                                  DataCell(Text(batch.batchOrder)),
+                                  DataCell(Text(batch.project)),
+                                  DataCell(Text(DateFormat('dd/MM/yyyy').format(batch.receivingDate))),
+                                  DataCell(Text(age.toString())),
+                                  DataCell(Text(batch.assignedPersonal ?? "Unassigned")),
+                                  DataCell(Center(child: Text(batch.samples.length.toString()))),
+                                  DataCell(
+                                    DropdownButton<String>(
+                                      value: batch.status,
+                                      underline: Container(),
+                                      items: _statusOptions.map((String value) {
+                                        return DropdownMenuItem<String>(value: value, child: Text(value));
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        if (newValue != null) {
+                                          setState(() {
+                                            final originalBatch = _allBatches.firstWhere((b) => b.batchOrder == batch.batchOrder);
+                                            originalBatch.status = newValue;
+                                            batch.status = newValue;
+                                          });
+                                        }
+                                      },
                                     ),
                                   ),
-                                ),
-                                DataCell(
-                                  DropdownButton<String>(
-                                    value: batch.status,
-                                    underline: Container(),
-                                    items:
-                                        _statusOptions.map((String value) {
-                                          return DropdownMenuItem<String>(
-                                            value: value,
-                                            child: Text(value),
-                                          );
-                                        }).toList(),
-                                    onChanged: (String? newValue) {
-                                      if (newValue != null) {
-                                        setState(() {
-                                          final originalBatch = _allBatches
-                                              .firstWhere(
-                                                (b) =>
-                                                    b.batchOrder ==
-                                                    batch.batchOrder,
-                                              );
-                                          originalBatch.status = newValue;
-                                          batch.status = newValue;
-                                        });
-                                      }
-                                    },
+                                  DataCell(
+                                    ElevatedButton(
+                                      child: const Text('View Batch'),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => BatchOrderDetailsPage(batch: batch)),
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
-                                DataCell(
-                                  ElevatedButton(
-                                    child: const Text('View Batch'),
-                                    onPressed: () {
-                                      // TODO: Navigate to the sample registry page for this batch
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  BatchOrderDetailsPage(
-                                                    batch: batch,
-                                                  ),
-                                        ),
-                                      );
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Viewing batch: ${batch.batchOrder}',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
+                                ],
+                              );
+                            }).toList(),
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
+        // This SizedBox provides spacing between the table and the button.
+        const SizedBox(height: 20),
+        // This button is now pushed to the bottom.
         SizedBox(
-          width: 200, // Rectangular width
-          height: 100, // Rectangular height
+          width: 200,
+          height: 60,
           child: ElevatedButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreateRunPage()),
+                MaterialPageRoute(builder: (context) => const CreateRunPage()),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colours.border, // Green background
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12)),
-              ),
-              padding: EdgeInsets.zero, // Remove default padding
-              elevation: 0, // No shadow
-              side: BorderSide.none, // Explicitly remove border
+              backgroundColor: Colours.border,
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+              padding: EdgeInsets.zero,
+              elevation: 0,
+              side: BorderSide.none,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center, // Center the content
+              mainAxisAlignment: MainAxisAlignment.center,
               children: const [
                 Text(
                   "Proceed",
-                  style: TextStyle(
-                    color: Colors.white, // White text for contrast
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
-                SizedBox(width: 8), // Space between text and arrow
+                SizedBox(width: 8),
                 Icon(
-                  Icons.arrow_forward, // Next arrow
-                  color: Colors.white, // White arrow for contrast
+                  Icons.arrow_forward,
+                  color: Colors.white,
                   size: 50,
                 ),
               ],
@@ -471,7 +424,6 @@ class _BatchListPageState extends State<BatchListPage> {
     );
   }
 
-  /// --- MODIFIED: Date picker text field now calls the range picker ---
   Widget _buildFilterDatePicker() {
     return TextField(
       controller: _dateFilterController,

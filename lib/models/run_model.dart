@@ -21,4 +21,12 @@ class RunModel {
   }) : data = data ?? [] {
     runID = "${Data.getInitials(taskName)}" + (Data.runCount + 1).toString();
   }
+  String getAge() {
+    Duration difference = DateTime.now().difference(date);
+
+    int hours = difference.inHours;
+    int days = difference.inDays;
+
+    return hours < 25 ? "$hours Hours" : "$days Days";
+  }
 }

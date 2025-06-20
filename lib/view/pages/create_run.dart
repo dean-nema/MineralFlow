@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/batch_model.dart';
 import 'package:mineralflow/models/run2_model.dart';
+import 'package:mineralflow/models/run_model.dart';
 import 'package:mineralflow/models/sample_model.dart';
 import 'package:mineralflow/view/pages/run2_details.dart';
+import 'package:mineralflow/view/pages/run_details.dart';
 
 class CreateRunPage extends StatefulWidget {
   const CreateRunPage({super.key});
@@ -103,7 +105,25 @@ class _CreateRunPageState extends State<CreateRunPage> {
         context,
         MaterialPageRoute(builder: (context) => Run2DetailsPage(run: run)),
       );
-    } else {}
+    } else if (_selectedTask == "Particle Size Distribution" ||
+        _selectedTask == "Calorific Value") {
+      return;
+    } else {
+      RunModel run = RunModel(
+        taskName: _selectedTask!,
+        status: "Pending",
+        samples: _selectedSamplesForRun,
+        date: DateTime.now(),
+        assignedPersonal: _selectedPersonnel!,
+      );
+      Data.runList.add(run);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AnalyticalRunDetailsPage(run: run),
+        ),
+      );
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Run created successfully!'),
@@ -333,6 +353,7 @@ class _CreateRunPageState extends State<CreateRunPage> {
                       .toList(),
               onChanged: (value) {
                 setState(() => _selectedTask = value);
+                _selectedSamplesForRun.clear();
                 _filterBatchesByTask(value);
               },
             ),

@@ -3,7 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/batch_model.dart';
 import 'package:mineralflow/models/run2_model.dart'; // Make sure path is correct
-import 'package:mineralflow/models/sample_model.dart'; // Make sure path is correct
+import 'package:mineralflow/models/sample_model.dart';
+import 'package:mineralflow/view/pages/run_list.dart'; // Make sure path is correct
 
 class Run2DetailsPage extends StatefulWidget {
   final Run2Model run;
@@ -28,15 +29,35 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
 
   // --- LOGIC FUNCTIONS ---
 
+  // --- NEW: Function to save changes back to the original model ---
+  void _saveChanges() {
+    // Update the original 'run' object passed to the widget
+    setState(() {
+      widget.run.status = _currentRun.status;
+      widget.run.samples = _currentSamples;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Changes saved successfully!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => AllRunsPage()),
+    );
+  }
+
   void _removeSample(int sampleCode) {
     setState(() {
       _currentSamples.removeWhere((sample) => sample.sampleCode == sampleCode);
-      // Optional: You might want to update the original object as well
-      // _currentRun.samples = _currentSamples;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Sample $sampleCode removed from run.'),
+        content: Text(
+          'Sample $sampleCode removed from run. Press "Save" to confirm.',
+        ),
         backgroundColor: Colors.orange,
       ),
     );
@@ -51,9 +72,15 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Run status updated to $newStatus.'),
+        content: Text(
+          'Run status updated to "$newStatus". Press "Save" to confirm.',
+        ),
         backgroundColor: Colors.blue,
       ),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => AllRunsPage()),
     );
   }
 
@@ -76,9 +103,11 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
                 onPressed: () {
                   // TODO: Add logic here to delete from your global data source
                   print('Deleting run ${_currentRun.runID}');
-                  // Pop the dialog and then the details page
+                  Data.run2List.removeWhere(
+                    (run) => run.runID == _currentRun.runID,
+                  );
                   Navigator.of(context).pop();
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(); // Go back to the previous screen
                 },
                 child: const Text('Delete'),
               ),
@@ -104,13 +133,10 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            // Top Section: Run information
             _buildHeaderInfo(),
             const SizedBox(height: 24),
-            // Middle Section: Samples table (takes up most of the space)
             Expanded(child: _buildSamplesTable()),
             const SizedBox(height: 24),
-            // Bottom Section: Action Buttons
             _buildActionButtons(),
           ],
         ),
@@ -118,7 +144,6 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
     );
   }
 
-  /// Builds the top header with run details.
   Widget _buildHeaderInfo() {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -161,7 +186,6 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
     );
   }
 
-  /// Builds the scrollable table of samples.
   Widget _buildSamplesTable() {
     return Container(
       decoration: BoxDecoration(
@@ -170,7 +194,6 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
       ),
       child: Column(
         children: [
-          // Header for the table container
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
@@ -186,7 +209,6 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
-          // The table itself
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -204,18 +226,12 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
                       ],
                       rows:
                           _currentSamples.map((sample) {
-                            BatchModel? activeBatch;
-                            for (var element in Data.batchList) {
-                              for (var element2 in element.samples) {
-                                if (element2 == sample) {
-                                  activeBatch = element;
-                                  break;
-                                }
-                              }
-                            }
+                            BatchModel? activeBatch = Data.batchList.firstWhere(
+                              (element) => element.samples.contains(sample),
+                            );
                             return DataRow(
                               cells: [
-                                DataCell(Text(activeBatch!.batchOrder)),
+                                DataCell(Text(activeBatch.batchOrder)),
                                 DataCell(Text(sample.sampleCode.toString())),
                                 DataCell(Text(sample.sampleLocation ?? 'N/A')),
                                 DataCell(
@@ -247,11 +263,24 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
     );
   }
 
-  /// Builds the row of action buttons at the bottom.
+  /// --- MODIFIED: Builds the row of action buttons at the bottom ---
   Widget _buildActionButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        // SAVE BUTTON
+        ElevatedButton.icon(
+          onPressed: _saveChanges,
+          icon: const Icon(Icons.save_alt_outlined),
+          label: const Text('Save Changes'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue[800], // Primary action color
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          ),
+        ),
+        const SizedBox(width: 20),
+        // IN-PROGRESS BUTTON
         ElevatedButton.icon(
           onPressed: () => _setStatus('In-Progress'),
           icon: const Icon(Icons.hourglass_top_rounded),
@@ -263,6 +292,7 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
           ),
         ),
         const SizedBox(width: 20),
+        // COMPLETE BUTTON
         ElevatedButton.icon(
           onPressed: () => _setStatus('Complete'),
           icon: const Icon(Icons.check_circle_outline),
@@ -274,6 +304,7 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
           ),
         ),
         const SizedBox(width: 20),
+        // DELETE BUTTON
         ElevatedButton.icon(
           onPressed: _showDeleteConfirmation,
           icon: const Icon(Icons.delete_forever_outlined),
@@ -288,7 +319,6 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
     );
   }
 
-  /// Helper widget for the header info blocks.
   Widget _buildInfoBlock(String label, String value, {bool highlight = false}) {
     return Column(
       children: [

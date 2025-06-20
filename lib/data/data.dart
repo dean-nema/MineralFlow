@@ -4,6 +4,7 @@ import 'package:mineralflow/models/batch_samples_model.dart';
 import 'package:mineralflow/models/batch_types_model.dart';
 import 'package:mineralflow/models/recepients_model.dart';
 import 'package:mineralflow/models/run2_model.dart';
+import 'package:mineralflow/models/run_model.dart';
 import 'package:mineralflow/models/sample_model.dart';
 import 'package:mineralflow/models/sticker_model.dart';
 import 'package:mineralflow/view/components/RequestForm/DataModel/recepient.dart';
@@ -18,12 +19,20 @@ class Data {
   static DateTime date = DateTime.now();
   //lists
   static List<Run2Model> run2List = [];
+  static List<RunModel> runList = [];
   static List<BatchModel> batchList = [];
   static List<String> analyticsTasks = [];
   static List<Recipient> currentRecipients = [];
   static int batchOrderCount = 2000;
   //constant values
   static double crv1 = 0.012;
+  static Map<String, double> crvOptions = {
+    'Calorific Value': 0.02,
+    'ISO Ash': 0.01,
+    'ISO Moisture': 0.002,
+    'ISO Volatile': 0.001,
+    'Quick Ash': 0.003,
+  };
   static int runCount = 3000;
   static final List<String> samplePrepOptions = ['Crushing', 'Pulverization'];
   static final List<String> analyticalSectionOptions = [
