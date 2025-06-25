@@ -2,42 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/batch_model.dart';
+import 'package:mineralflow/models/sample_model.dart';
+import 'package:mineralflow/view/Constants/utils.dart';
+import 'package:mineralflow/view/components/app_bar2.dart';
 import 'package:mineralflow/view/pages/recipient_display.dart';
-import 'package:mineralflow/view/pages/sample_list.dart'; // Make sure this path is correct
+import 'package:mineralflow/view/pages/sample_list.dart';
 
-/// A helper class to manage the status of each individual analysis task.
-class TaskStatus {
-  final String name;
-  int numberOfSamples = 0;
-  int pending;
-  int complete;
-  int inProgress;
-
-  TaskStatus({
-    required this.name,
-    required this.pending,
-    required this.complete,
-    required this.inProgress,
-    required this.numberOfSamples,
-  });
-}
-
-class BatchOrderDetailsPage extends StatefulWidget {
+class BatchDetailsPage extends StatefulWidget {
   final BatchModel batch;
-  const BatchOrderDetailsPage({super.key, required this.batch});
+  const BatchDetailsPage({super.key, required this.batch});
 
   @override
-  State<BatchOrderDetailsPage> createState() => _BatchOrderDetailsPageState();
+  State<BatchDetailsPage> createState() => _BatchDetailsPageState();
 }
 
-class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
+class _BatchDetailsPageState extends State<BatchDetailsPage> {
   // --- STATE VARIABLES ---
   late BatchModel _currentBatch;
-  late List<TaskStatus> _taskStatuses;
 
   // Options for the dropdowns
   final List<String> _batchStatusOptions = Data.statusOptions;
-  final List<String> _taskStatusOptions = Data.taskStatusOptions;
   final List<String> _priorityOptions = Data.priorityOptions;
   final List<String> _personnelOptions = Data.personnelOptions;
 
@@ -45,7 +29,6 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
   void initState() {
     super.initState();
     _currentBatch = widget.batch;
-    _taskStatuses = Data.getBatchStats(widget.batch);
   }
 
   // --- HELPER FUNCTIONS ---
@@ -67,12 +50,13 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: Text(
-          "Batch Details: ${_currentBatch.batchOrder}",
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue[900],
-        foregroundColor: Colors.white,
+        title: const Text('Batch Details'),
+        backgroundColor: Colors.blueGrey, // Matches the SideBar color
+      ),
+      // --- MODIFIED: Add the new SideBar as the drawer ---
+      drawer: SideBar(
+        userName: Data.currentUser,
+        activePage: ActivePage.batches,
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -89,6 +73,7 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
   }
 
   Widget _buildInfoPanel() {
+    // This widget remains unchanged as its logic is still valid.
     return Container(
       width: 350,
       decoration: BoxDecoration(
@@ -195,7 +180,17 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
     );
   }
 
+  /// --- REDESIGNED: This method now builds the dynamic results table ---
   Widget _buildTasksTablePanel() {
+    // Dynamically create columns: static ones first, then one for each task.
+    final List<DataColumn> tableColumns = [
+      const DataColumn(label: Text('Sample Code')),
+      const DataColumn(label: Text('Sample Location')),
+      ..._currentBatch.tasks.map(
+        (taskName) => DataColumn(label: Text(taskName)),
+      ),
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -221,32 +216,19 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
                     color: Colors.black87,
                   ),
                   columnSpacing: 30,
-                  // New column structure
-                  columns: const [
-                    DataColumn(label: Text('Method Analysis')),
-                    DataColumn(label: Text('Number of Samples'), numeric: true),
-                    DataColumn(label: Text('Pending'), numeric: true),
-                    DataColumn(label: Text('In-Progress'), numeric: true),
-                    DataColumn(label: Text('Complete'), numeric: true),
-                  ],
-                  // New row structure based on the task's single status
+                  columns: tableColumns,
+                  // Generate a row for each sample in the batch.
                   rows:
-                      _taskStatuses.map((task) {
-                        final totalSamples = task.numberOfSamples.toString();
-
+                      _currentBatch.samples.map((sample) {
                         return DataRow(
                           cells: [
-                            DataCell(Text(task.name)),
-                            DataCell(Center(child: Text(totalSamples))),
-                            DataCell(
-                              Center(child: Text(task.pending.toString())),
-                            ),
-                            DataCell(
-                              Center(child: Text(task.inProgress.toString())),
-                            ),
-                            DataCell(
-                              Center(child: Text(task.complete.toString())),
-                            ),
+                            // The static cells for sample details.
+                            DataCell(Text(sample.sampleCode.toString())),
+                            DataCell(Text(sample.sampleLocation ?? 'N/A')),
+                            // The dynamic cells, one for each task.
+                            ..._currentBatch.tasks.map((taskName) {
+                              return _buildResultCell(sample, taskName);
+                            }),
                           ],
                         );
                       }).toList(),
@@ -257,6 +239,88 @@ class _BatchOrderDetailsPageState extends State<BatchOrderDetailsPage> {
         ),
       ),
     );
+  }
+
+  /// This is the core logic for determining what to display in each task cell.
+  DataCell _buildResultCell(SampleModel sample, String taskName) {
+    // Check if the task has a status update for this sample.
+    if (sample.taskUpdate.containsKey(taskName)) {
+      final status = sample.taskUpdate[taskName]!;
+      // If the status is Complete or Finalized, show the data.
+      if (status == 'Complete' || status == 'Finalized') {
+        // --- MODIFICATION START ---
+        // Define the tasks that should just show "Complete" instead of a value.
+        const tasksToShowComplete = [
+          'Pulverization',
+          'Crushing',
+          'Particle Size Distribution',
+          'Calorific Value',
+        ];
+
+        // Check if the current task is one of them.
+        if (tasksToShowComplete.contains(taskName)) {
+          return const DataCell(
+            Center(
+              child: Text(
+                'Complete', // Display "Complete" as requested.
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          );
+        }
+        // --- MODIFICATION END ---
+
+        // For all other tasks, show the numerical result.
+        final resultValue = sample.taskData[taskName];
+        return DataCell(
+          Center(
+            child: Text(
+              resultValue?.toStringAsFixed(4) ??
+                  'ERROR', // Show formatted data or an error
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        );
+      } else {
+        // Otherwise, show the current status as a styled badge.
+        return DataCell(
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getStatusBadgeColor(status),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                status,
+                style: TextStyle(color: Colors.grey[800], fontSize: 12),
+              ),
+            ),
+          ),
+        );
+      }
+    } else {
+      // If the task doesn't exist in the update map, display N/A.
+      return const DataCell(Center(child: Text('N/A')));
+    }
+  }
+
+  /// Helper function to provide colors for status badges in the table.
+  Color _getStatusBadgeColor(String status) {
+    switch (status) {
+      case 'In-Progress':
+        return Colors.amber.withOpacity(0.3);
+      case 'Pending':
+        return Colors.blue.withOpacity(0.2);
+      default:
+        return Colors.grey.withOpacity(0.2);
+    }
   }
 
   // --- HELPER WIDGETS (Unchanged) ---

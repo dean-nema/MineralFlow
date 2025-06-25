@@ -6,127 +6,113 @@ import 'package:mineralflow/data/sample_row.dart';
 import 'package:mineralflow/models/batch_model.dart';
 import 'package:mineralflow/models/recepients_model.dart';
 import 'package:mineralflow/models/sample_model.dart';
+import 'package:mineralflow/view/Constants/texts.dart';
+import 'package:mineralflow/view/Constants/utils.dart';
 import 'package:mineralflow/view/components/RequestForm/report_distr.dart';
 import 'package:mineralflow/view/components/RequestForm/sample_info.dart';
 import 'package:mineralflow/view/components/RequestForm/task_assign.dart';
+import 'package:mineralflow/view/components/app_bar2.dart';
+// --- 1. REMOVE the old app bar import ---
+// import 'package:mineralflow/view/components/app_bar2.dart';
+// --- 2. ADD the new sidebar import ---
 import 'package:mineralflow/view/pages/sample_registry.dart';
 
 class RequestPage extends StatefulWidget {
-  RequestPage({super.key});
+  const RequestPage({super.key});
 
   @override
   State<RequestPage> createState() => _RequestPageState();
 }
 
 class _RequestPageState extends State<RequestPage> {
-  //variables
+  // --- All your existing variables and functions remain unchanged ---
   PlatformFile? document;
   final TextEditingController amount = TextEditingController();
   final TextEditingController submitter = TextEditingController();
   final TextEditingController projectName = TextEditingController();
-  // final TextEditingController batchLocation = TextEditingController();
 
   String? _selectedClassification;
-
   final List<String> _classifications = Data.classifications;
-
   PlatformFile? _selectedFile;
-  //Functions
-  bool areAllFieldsFilled() {
-    return amount.text.isNotEmpty &&
-        submitter.text.isNotEmpty &&
-        Data.type != null &&
-        projectName.text.isNotEmpty;
-    //  && batchLocation.text.isNotEmpty;
-  }
-
-  // 3. Logic to open the file picker and handle the result
-  void _pickFile() async {
-    // Opens the file picker dialog
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      // Restrict to only the allowed file types
-      allowedExtensions: ['pdf', 'doc', 'docx'],
-    );
-
-    // If the user picked a file (result is not null)
-    if (result != null) {
-      // Update the state to hold the file's information
-      setState(() {
-        _selectedFile = result.files.first;
-      });
-    } else {
-      // User canceled the picker
-    }
-  }
-
-  // The state (the map of selected options) lives here in the parent.
   late Map<String, bool> _selectedReportOptions;
-
-  // The list of options is needed to initialize the map.
   final List<String> _reportOptions = Data.reportOptions;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the state.
     _selectedReportOptions = {for (var option in _reportOptions) option: false};
   }
 
-  // This function will be passed to the child widget.
-  // It's the only place where setState is called.
+  bool areAllFieldsFilled() {
+    return amount.text.isNotEmpty &&
+        submitter.text.isNotEmpty &&
+        Data.type != null &&
+        projectName.text.isNotEmpty;
+  }
+
+  void _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx'],
+    );
+    if (result != null) {
+      setState(() {
+        _selectedFile = result.files.first;
+      });
+    }
+  }
+
   void _handleOptionChange(String option, bool value) {
     setState(() {
       _selectedReportOptions[option] = value;
     });
   }
+  // --- End of unchanged logic ---
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
+    final width = MediaQuery.of(context).size.width;
     bool smallScreen = width < 1866 ? true : false;
 
     return Scaffold(
       backgroundColor: Colors.lightBlue[50],
+
+      // --- 3. REPLACE the old ReusableAppBar ---
+      appBar: AppBar(
+        title: const Text("New Batch Request"),
+        backgroundColor: Colors.blueGrey, // Match sidebar theme
+      ),
+
+      // --- 4. ADD the new SideBar to the drawer property ---
+      drawer: SideBar(
+        userName: Data.currentUser,
+        activePage: ActivePage.newBatch, // This is the active page
+      ),
+
+      // --- The entire body of your page remains exactly the same ---
       body: SingleChildScrollView(
         child: Center(
-          // Wrapped in a SingleChildScrollView to prevent overflow on smaller screens
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 1. "Mineral Flow" text is thicker and larger
-                Text(
-                  "Mineral Flow",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900, // Use w900 for extra thickness
-                    fontSize: 28,
-                  ),
-                ),
+                Text("Mineral Flow", style: TextFonts.titles),
                 const SizedBox(height: 5),
                 Text(
                   "Sample Request & Analysis Form",
                   style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                 ),
                 const SizedBox(height: 20),
-
                 SampleInfo(
                   document: document,
                   amount: amount,
                   submitter: submitter,
                   projectName: projectName,
-                  // batchLocation: batchLocation,
                   classification: _selectedClassification,
                 ),
-
-                Padding(
-                  padding: const EdgeInsets.all(50.0),
-                  child: TaskAssign(),
-                ),
-
+                Padding(padding: EdgeInsets.all(50.0), child: TaskAssign()),
                 ReportDistr(),
-
                 Padding(
                   padding: const EdgeInsets.only(top: 28.0, bottom: 25),
                   child: Center(
@@ -149,7 +135,6 @@ class _RequestPageState extends State<RequestPage> {
                                 Data.samplePrepOptions.toList();
                             List<RecepientsModel> recepients =
                                 Data.convertRecepients();
-                            //create batch
                             for (var sample in samples) {
                               for (var task in tasks) {
                                 sample.taskUpdate[task] = "Pending";
@@ -162,7 +147,7 @@ class _RequestPageState extends State<RequestPage> {
                               tasks: tasks,
                               recepients: recepients,
                               project: projectName.text,
-                              batchLocation: Data.firstStage,
+                              batchLocation: Data.batchLocations[0],
                               batchOrder: batchOrder,
                               samples: samples,
                               status: "Pending",

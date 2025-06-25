@@ -10,14 +10,14 @@ import 'package:mineralflow/view/pages/psd_details.dart';
 import 'package:mineralflow/view/pages/run2_details.dart';
 import 'package:mineralflow/view/pages/run_details.dart';
 
-/// A wrapper class to unify RunModel, Run2Model, and PsdModel for display purposes.
+/// A wrapper class to unify run models for display purposes in the UI.
 class DisplayRun {
   final String runID;
   final String status;
   final String age;
   final String assignedPersonal;
   final DateTime date;
-  final dynamic originalRun; // Can be RunModel, Run2Model, or PsdModel
+  final dynamic originalRun;
 
   DisplayRun({
     required this.runID,
@@ -29,16 +29,16 @@ class DisplayRun {
   });
 }
 
-class AllRunsPage extends StatefulWidget {
-  const AllRunsPage({super.key});
+class CompleteRunsPage extends StatefulWidget {
+  const CompleteRunsPage({super.key});
 
   @override
-  State<AllRunsPage> createState() => _AllRunsPageState();
+  State<CompleteRunsPage> createState() => _CompleteRunsPageState();
 }
 
-class _AllRunsPageState extends State<AllRunsPage> {
-  // Master list that holds all runs without any filters.
-  List<DisplayRun> _allRuns = [];
+class _CompleteRunsPageState extends State<CompleteRunsPage> {
+  // Master list that holds all COMPLETE runs without any filters.
+  List<DisplayRun> _allCompleteRuns = [];
   // The list that will be displayed in the UI after filters are applied.
   List<DisplayRun> _filteredRuns = [];
 
@@ -51,74 +51,78 @@ class _AllRunsPageState extends State<AllRunsPage> {
   @override
   void initState() {
     super.initState();
-    _loadAndCombineRuns();
+    _loadCompleteRuns();
   }
 
-  /// Loads, combines, and prepares all run data and filter options.
-  void _loadAndCombineRuns() {
+  /// --- MODIFIED: Loads only runs with 'Complete' status from all sources ---
+  void _loadCompleteRuns() {
     List<DisplayRun> combinedList = [];
-    Set<String> personnel = {'All'}; // Use a Set to avoid duplicates
+    Set<String> personnel = {'All'};
 
-    // Load RunModel runs
+    // Process all runs from RunModel list
     for (var run in Data.runList) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(),
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
+      if (run.status == 'Complete') {
+        combinedList.add(
+          DisplayRun(
+            runID: run.runID,
+            status: run.status,
+            age: run.getAge(),
+            assignedPersonal: run.assignedPersonal,
+            date: run.date,
+            originalRun: run,
+          ),
+        );
+        personnel.add(run.assignedPersonal);
+      }
     }
 
-    // Load Run2Model runs
+    // Process all runs from Run2Model list
     for (var run in Data.run2List) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(),
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
+      if (run.status == 'Complete') {
+        combinedList.add(
+          DisplayRun(
+            runID: run.runID,
+            status: run.status,
+            age: run.getAge(),
+            assignedPersonal: run.assignedPersonal,
+            date: run.date,
+            originalRun: run,
+          ),
+        );
+        personnel.add(run.assignedPersonal);
+      }
     }
 
-    // --- NEW: Load PsdModel runs from Data.psdList ---
+    // --- NEW: Process all runs from PsdModel list ---
     for (var run in Data.psdList) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(), // PsdModel has a getAge() method
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
+      if (run.status == 'Complete') {
+        combinedList.add(
+          DisplayRun(
+            runID: run.runID,
+            status: run.status,
+            age: run.getAge(),
+            assignedPersonal: run.assignedPersonal,
+            date: run.date,
+            originalRun: run,
+          ),
+        );
+        personnel.add(run.assignedPersonal);
+      }
     }
     // --- END OF NEW CODE ---
 
-    // Set the state for the master list and filter options
     setState(() {
-      _allRuns = combinedList;
+      _allCompleteRuns = combinedList;
       _personnelOptions.clear();
       _personnelOptions.addAll(personnel.toList()..sort());
-      _applyFilters(); // Apply filters initially
+      _applyFilters();
     });
   }
 
-  /// Applies the current filter state to the master list of runs.
+  /// Applies the current filter state to the master list of COMPLETE runs.
   void _applyFilters() {
-    List<DisplayRun> tempFilteredList = List.from(_allRuns);
+    List<DisplayRun> tempFilteredList = List.from(_allCompleteRuns);
 
-    // Filter by selected personnel
     if (_selectedPersonnel != null && _selectedPersonnel != 'All') {
       tempFilteredList =
           tempFilteredList
@@ -126,7 +130,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Filter by start date
     if (_startDate != null) {
       tempFilteredList =
           tempFilteredList
@@ -134,7 +137,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Filter by end date (inclusive)
     if (_endDate != null) {
       DateTime inclusiveEndDate = DateTime(
         _endDate!.year,
@@ -150,7 +152,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Sort the final filtered list by date
     tempFilteredList.sort((a, b) => b.date.compareTo(a.date));
 
     setState(() {
@@ -189,7 +190,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     }
   }
 
-  /// Navigates to the correct details page based on the run's original type.
+  /// --- MODIFIED: Handles navigation for all run types, including PsdModel ---
   void _navigateToDetails(dynamic originalRun) {
     Widget detailsPage;
     if (originalRun is RunModel) {
@@ -197,7 +198,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     } else if (originalRun is Run2Model) {
       detailsPage = Run2DetailsPage(run: originalRun);
     }
-    // --- NEW: Check for PsdModel and navigate to PsdPage ---
+    // --- NEW: Check for PsdModel ---
     else if (originalRun is PsdModel) {
       detailsPage = PsdPage(psdRun: originalRun);
     }
@@ -215,7 +216,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => detailsPage),
-    ).then((_) => _loadAndCombineRuns()); // Refresh all data when returning
+    ).then((_) => _loadCompleteRuns()); // Refresh data when returning
   }
 
   // --- UI WIDGETS ---
@@ -224,7 +225,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     return Scaffold(
       backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
-        title: const Text("All Runs"),
+        title: const Text("Complete Runs"),
         backgroundColor: Colors.blueGrey,
       ),
       // --- 4. ADD the new SideBar to the drawer property ---
@@ -367,7 +368,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
               border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
             ),
             child: const Text(
-              'Run Overview',
+              'Complete Run Overview',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
           ),
@@ -411,7 +412,27 @@ class _AllRunsPageState extends State<AllRunsPage> {
                               color: MaterialStateProperty.all(rowColor),
                               cells: [
                                 DataCell(Text(run.runID)),
-                                DataCell(Text(run.status)),
+                                DataCell(
+                                  Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        run.status,
+                                        style: TextStyle(
+                                          color: Colors.green[800],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                                 DataCell(Text(run.assignedPersonal)),
                                 DataCell(Text(run.age)),
                                 DataCell(

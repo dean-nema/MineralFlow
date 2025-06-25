@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/batch_model.dart';
+import 'package:mineralflow/models/psd_model.dart';
 import 'package:mineralflow/models/run2_model.dart';
 import 'package:mineralflow/models/run_model.dart';
 import 'package:mineralflow/models/sample_model.dart';
+import 'package:mineralflow/view/Constants/utils.dart';
+import 'package:mineralflow/view/components/app_bar2.dart';
+// --- 1. REMOVE the old app bar import ---
+// import 'package:mineralflow/view/components/app_bar2.dart';
+// --- 2. ADD the new sidebar import ---
+import 'package:mineralflow/view/pages/psd_details.dart';
 import 'package:mineralflow/view/pages/run2_details.dart';
 import 'package:mineralflow/view/pages/run_details.dart';
 
@@ -15,14 +22,13 @@ class CreateRunPage extends StatefulWidget {
 }
 
 class _CreateRunPageState extends State<CreateRunPage> {
-  // --- STATE MANAGEMENT ---
+  // --- All your existing state management, logic, and dialogs remain unchanged ---
   String? _selectedPersonnel;
   String? _selectedTask;
   List<BatchModel> _allBatches = [];
   List<BatchModel> _availableBatches = [];
   List<SampleModel> _selectedSamplesForRun = [];
 
-  // --- DEMO DATA ---
   final List<String> _personnelOptions = Data.personnelOptions.toList();
   final List<String> _taskOptions =
       Data.samplePrepOptions.toList() +
@@ -39,7 +45,6 @@ class _CreateRunPageState extends State<CreateRunPage> {
     _allBatches = Data.batchList;
   }
 
-  // --- LOGIC ---
   void _filterBatchesByTask(String? task) {
     if (task == null) {
       setState(() => _availableBatches = []);
@@ -105,9 +110,18 @@ class _CreateRunPageState extends State<CreateRunPage> {
         context,
         MaterialPageRoute(builder: (context) => Run2DetailsPage(run: run)),
       );
-    } else if (_selectedTask == "Particle Size Distribution" ||
-        _selectedTask == "Calorific Value") {
-      return;
+    } else if (_selectedTask == "Particle Size Distribution") {
+      PsdModel run = PsdModel(
+        status: "Pending",
+        sample: _selectedSamplesForRun[0],
+        date: DateTime.now(),
+        assignedPersonal: _selectedPersonnel!,
+      );
+      Data.psdList.add(run);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => PsdPage(psdRun: run)),
+      );
     } else {
       RunModel run = RunModel(
         taskName: _selectedTask!,
@@ -132,10 +146,7 @@ class _CreateRunPageState extends State<CreateRunPage> {
     );
   }
 
-  // --- MODIFIED DIALOG LOGIC ---
   Future<void> _showAddSamplesDialog(BatchModel batch) async {
-    // 1. Pre-filter the samples that are eligible for the currently selected task.
-    // This list is the single source of truth for what is visible in the dialog.
     final List<SampleModel> filteredSamples =
         batch.samples
             .where(
@@ -146,7 +157,6 @@ class _CreateRunPageState extends State<CreateRunPage> {
             )
             .toList();
 
-    // 2. Initialize the map of checked states using ONLY the filtered samples.
     final Map<int, bool> selectedStates = {
       for (var sample in filteredSamples) sample.sampleCode: false,
     };
@@ -174,11 +184,9 @@ class _CreateRunPageState extends State<CreateRunPage> {
                     ElevatedButton.icon(
                       onPressed: () {
                         setDialogState(() {
-                          // 3. Determine if all VISIBLE samples are already checked.
                           final allVisibleSelected = filteredSamples.every(
                             (s) => selectedStates[s.sampleCode] == true,
                           );
-                          // 4. Toggle the state for ONLY the VISIBLE samples.
                           for (final sample in filteredSamples) {
                             selectedStates[sample.sampleCode] =
                                 !allVisibleSelected;
@@ -201,7 +209,6 @@ class _CreateRunPageState extends State<CreateRunPage> {
                       DataColumn(label: Text('Location')),
                       DataColumn(label: Text('Add')),
                     ],
-                    // 5. Build the UI from the filtered list.
                     rows:
                         filteredSamples.map((sample) {
                           return DataRow(
@@ -233,7 +240,6 @@ class _CreateRunPageState extends State<CreateRunPage> {
                 ),
                 FilledButton(
                   onPressed: () {
-                    // This logic remains correct as it filters based on the `selectedStates` map.
                     final samplesToAdd =
                         batch.samples
                             .where((s) => selectedStates[s.sampleCode] == true)
@@ -250,20 +256,23 @@ class _CreateRunPageState extends State<CreateRunPage> {
       },
     );
   }
+  // --- End of unchanged logic ---
 
-  // --- UI BUILD ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.lightBlue[50],
+      // --- 3. REPLACE the old ReusableAppBar ---
       appBar: AppBar(
-        title: const Text(
-          "Create Run",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue[900],
-        foregroundColor: Colors.white,
+        title: const Text("Create New Run"),
+        backgroundColor: Colors.blueGrey,
       ),
+      // --- 4. ADD the new SideBar to the drawer property ---
+      drawer: SideBar(
+        userName: Data.currentUser,
+        activePage: ActivePage.newRun, // Set the active page for highlighting
+      ),
+      // --- The entire body of your page remains exactly the same ---
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -300,7 +309,7 @@ class _CreateRunPageState extends State<CreateRunPage> {
     );
   }
 
-  // --- HELPER WIDGETS ---
+  // --- All helper widgets (_buildTopBar, etc.) remain unchanged ---
   Widget _buildTopBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -465,10 +474,6 @@ class _CreateRunPageState extends State<CreateRunPage> {
                         DataColumn(label: Text('Actions')),
                       ],
                       rows:
-                          // This logic to find the batch order is inefficient but works for the UI.
-                          // A better data model would link sample to batch more directly.
-                          // String batchOrder = Data.batchList
-                          //     .firstWhere((b) => b.samples.contains(sample), orElse: () => BatchModel(batchOrder: 'N/A', tasks: [], samples: [], client: '', submitter: ''))
                           _selectedSamplesForRun.map((sample) {
                             BatchModel? activeBatch;
                             for (var element in _availableBatches) {
@@ -478,7 +483,7 @@ class _CreateRunPageState extends State<CreateRunPage> {
                                   break;
                                 }
                               }
-                            } //     .batchOrder;
+                            }
                             return DataRow(
                               cells: [
                                 DataCell(Text(activeBatch!.batchOrder)),

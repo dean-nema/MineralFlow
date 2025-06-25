@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/batch_model.dart';
-import 'package:mineralflow/models/run2_model.dart'; // Make sure path is correct
+import 'package:mineralflow/models/run2_model.dart';
 import 'package:mineralflow/models/sample_model.dart';
-import 'package:mineralflow/view/pages/run_list.dart'; // Make sure path is correct
+import 'package:mineralflow/view/pages/run_list.dart';
 
 class Run2DetailsPage extends StatefulWidget {
   final Run2Model run;
@@ -15,23 +14,19 @@ class Run2DetailsPage extends StatefulWidget {
 }
 
 class _Run2DetailsPageState extends State<Run2DetailsPage> {
-  // Local state to manage changes without affecting the original object until saved
   late Run2Model _currentRun;
   late List<SampleModel> _currentSamples;
 
   @override
   void initState() {
     super.initState();
-    // Create a local copy of the run and its samples
     _currentRun = widget.run;
     _currentSamples = List.from(widget.run.samples);
   }
 
   // --- LOGIC FUNCTIONS ---
 
-  // --- NEW: Function to save changes back to the original model ---
   void _saveChanges() {
-    // Update the original 'run' object passed to the widget
     setState(() {
       widget.run.status = _currentRun.status;
       widget.run.samples = _currentSamples;
@@ -63,25 +58,45 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
     );
   }
 
+  /// --- MODIFIED to also handle the parent Batch status ---
   void _setStatus(String newStatus) {
     setState(() {
       _currentRun.status = newStatus;
     });
+
     for (var element in _currentRun.samples) {
       element.taskUpdate[_currentRun.taskName] = newStatus;
     }
+
+    // --- NEW LOGIC: Update the parent Batch status ---
+    // If we are starting or completing this run, ensure the parent batch is not pending.
+    if ((newStatus == 'In-Progress' || newStatus == 'Complete') &&
+        _currentRun.samples.isNotEmpty) {
+      // Find the batch that these samples belong to by searching the global list.
+      final batchToUpdate = Data.batchList.firstWhere(
+        (b) => b.samples.contains(_currentRun.samples.first),
+      );
+
+      // f we found the batch and it's pending, update it to In-Progress.
+      if (batchToUpdate != null && batchToUpdate.status == 'Pending') {
+        batchToUpdate.status = 'In-Progress';
+        print(
+          'Parent Batch ${batchToUpdate.batchOrder} status updated to In-Progress.',
+        );
+      }
+    }
+    // --- END OF NEW LOGIC ---
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Run status updated to "$newStatus". Press "Save" to confirm.',
+          'Run status updated to "$newStatus". Press "Save" to confirm changes.',
         ),
         backgroundColor: Colors.blue,
       ),
     );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => AllRunsPage()),
-    );
+    // Note: We no longer automatically navigate away after setting status,
+    // allowing the user to make more changes before saving.
   }
 
   Future<void> _showDeleteConfirmation() async {
@@ -101,13 +116,13 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () {
-                  // TODO: Add logic here to delete from your global data source
-                  print('Deleting run ${_currentRun.runID}');
                   Data.run2List.removeWhere(
                     (run) => run.runID == _currentRun.runID,
                   );
+                  print('Deleting run ${_currentRun.runID}');
                   Navigator.of(context).pop();
-                  Navigator.of(context).pop(); // Go back to the previous screen
+                  // Pop twice to go back to the list page
+                  Navigator.of(context).pop();
                 },
                 child: const Text('Delete'),
               ),
@@ -122,6 +137,12 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
+        leading: BackButton(
+          onPressed: () {
+            // Ensure changes are saved when navigating back
+            _saveChanges();
+          },
+        ),
         title: Text(
           "Run Details: ${_currentRun.runID}",
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -226,12 +247,16 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
                       ],
                       rows:
                           _currentSamples.map((sample) {
+                            // Find the batch for the current sample
                             BatchModel? activeBatch = Data.batchList.firstWhere(
                               (element) => element.samples.contains(sample),
                             );
                             return DataRow(
                               cells: [
-                                DataCell(Text(activeBatch.batchOrder)),
+                                // Display batch order or 'N/A' if not found
+                                DataCell(
+                                  Text(activeBatch?.batchOrder ?? 'N/A'),
+                                ),
                                 DataCell(Text(sample.sampleCode.toString())),
                                 DataCell(Text(sample.sampleLocation ?? 'N/A')),
                                 DataCell(
@@ -263,7 +288,6 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
     );
   }
 
-  /// --- MODIFIED: Builds the row of action buttons at the bottom ---
   Widget _buildActionButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -272,9 +296,9 @@ class _Run2DetailsPageState extends State<Run2DetailsPage> {
         ElevatedButton.icon(
           onPressed: _saveChanges,
           icon: const Icon(Icons.save_alt_outlined),
-          label: const Text('Save Changes'),
+          label: const Text('Save and Exit'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[800], // Primary action color
+            backgroundColor: Colors.blue[800],
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           ),

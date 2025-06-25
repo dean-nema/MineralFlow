@@ -6,18 +6,21 @@ import 'package:mineralflow/models/run_model.dart';
 import 'package:mineralflow/models/run2_model.dart';
 import 'package:mineralflow/view/Constants/utils.dart';
 import 'package:mineralflow/view/components/app_bar2.dart';
-import 'package:mineralflow/view/pages/psd_details.dart';
+// --- 1. REMOVE the old app bar import ---
+// import 'package:mineralflow/view/components/app_bar2.dart';
+// --- 2. ADD the new sidebar import ---
+import 'package:mineralflow/view/pages/psd_details.dart'; // Import PsdPage for navigation
 import 'package:mineralflow/view/pages/run2_details.dart';
 import 'package:mineralflow/view/pages/run_details.dart';
 
-/// A wrapper class to unify RunModel, Run2Model, and PsdModel for display purposes.
+/// A wrapper class to unify run models for display purposes in the UI.
 class DisplayRun {
   final String runID;
   final String status;
   final String age;
   final String assignedPersonal;
   final DateTime date;
-  final dynamic originalRun; // Can be RunModel, Run2Model, or PsdModel
+  final dynamic originalRun;
 
   DisplayRun({
     required this.runID,
@@ -29,16 +32,16 @@ class DisplayRun {
   });
 }
 
-class AllRunsPage extends StatefulWidget {
-  const AllRunsPage({super.key});
+class PendingRunsPage extends StatefulWidget {
+  const PendingRunsPage({super.key});
 
   @override
-  State<AllRunsPage> createState() => _AllRunsPageState();
+  State<PendingRunsPage> createState() => _PendingRunsPageState();
 }
 
-class _AllRunsPageState extends State<AllRunsPage> {
-  // Master list that holds all runs without any filters.
-  List<DisplayRun> _allRuns = [];
+class _PendingRunsPageState extends State<PendingRunsPage> {
+  // Master list that holds all PENDING runs without any filters.
+  List<DisplayRun> _allPendingRuns = [];
   // The list that will be displayed in the UI after filters are applied.
   List<DisplayRun> _filteredRuns = [];
 
@@ -51,74 +54,77 @@ class _AllRunsPageState extends State<AllRunsPage> {
   @override
   void initState() {
     super.initState();
-    _loadAndCombineRuns();
+    _loadPendingRuns();
   }
 
-  /// Loads, combines, and prepares all run data and filter options.
-  void _loadAndCombineRuns() {
+  /// --- MODIFIED: Loads only runs with 'Pending' status from ALL sources ---
+  void _loadPendingRuns() {
     List<DisplayRun> combinedList = [];
-    Set<String> personnel = {'All'}; // Use a Set to avoid duplicates
+    Set<String> personnel = {'All'};
 
-    // Load RunModel runs
+    // Process RunModel list
     for (var run in Data.runList) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(),
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
+      if (run.status == 'Pending') {
+        combinedList.add(
+          DisplayRun(
+            runID: run.runID,
+            status: run.status,
+            age: run.getAge(),
+            assignedPersonal: run.assignedPersonal,
+            date: run.date,
+            originalRun: run,
+          ),
+        );
+        personnel.add(run.assignedPersonal);
+      }
     }
 
-    // Load Run2Model runs
+    // Process Run2Model list
     for (var run in Data.run2List) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(),
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
+      if (run.status == 'Pending') {
+        combinedList.add(
+          DisplayRun(
+            runID: run.runID,
+            status: run.status,
+            age: run.getAge(),
+            assignedPersonal: run.assignedPersonal,
+            date: run.date,
+            originalRun: run,
+          ),
+        );
+        personnel.add(run.assignedPersonal);
+      }
     }
 
-    // --- NEW: Load PsdModel runs from Data.psdList ---
+    // Process PsdModel list
     for (var run in Data.psdList) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(), // PsdModel has a getAge() method
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
+      if (run.status == 'Pending') {
+        combinedList.add(
+          DisplayRun(
+            runID: run.runID,
+            status: run.status,
+            age: run.getAge(),
+            assignedPersonal: run.assignedPersonal,
+            date: run.date,
+            originalRun: run,
+          ),
+        );
+        personnel.add(run.assignedPersonal);
+      }
     }
-    // --- END OF NEW CODE ---
 
-    // Set the state for the master list and filter options
     setState(() {
-      _allRuns = combinedList;
+      _allPendingRuns = combinedList;
       _personnelOptions.clear();
       _personnelOptions.addAll(personnel.toList()..sort());
-      _applyFilters(); // Apply filters initially
+      _applyFilters();
     });
   }
 
-  /// Applies the current filter state to the master list of runs.
+  /// Applies the current filter state to the master list of PENDING runs.
   void _applyFilters() {
-    List<DisplayRun> tempFilteredList = List.from(_allRuns);
+    List<DisplayRun> tempFilteredList = List.from(_allPendingRuns);
 
-    // Filter by selected personnel
     if (_selectedPersonnel != null && _selectedPersonnel != 'All') {
       tempFilteredList =
           tempFilteredList
@@ -126,7 +132,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Filter by start date
     if (_startDate != null) {
       tempFilteredList =
           tempFilteredList
@@ -134,7 +139,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Filter by end date (inclusive)
     if (_endDate != null) {
       DateTime inclusiveEndDate = DateTime(
         _endDate!.year,
@@ -150,7 +154,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Sort the final filtered list by date
     tempFilteredList.sort((a, b) => b.date.compareTo(a.date));
 
     setState(() {
@@ -189,20 +192,16 @@ class _AllRunsPageState extends State<AllRunsPage> {
     }
   }
 
-  /// Navigates to the correct details page based on the run's original type.
+  /// --- MODIFIED: Handles navigation for all run types ---
   void _navigateToDetails(dynamic originalRun) {
     Widget detailsPage;
     if (originalRun is RunModel) {
       detailsPage = AnalyticalRunDetailsPage(run: originalRun);
     } else if (originalRun is Run2Model) {
       detailsPage = Run2DetailsPage(run: originalRun);
-    }
-    // --- NEW: Check for PsdModel and navigate to PsdPage ---
-    else if (originalRun is PsdModel) {
+    } else if (originalRun is PsdModel) {
       detailsPage = PsdPage(psdRun: originalRun);
-    }
-    // --- END OF NEW CODE ---
-    else {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Unknown run type.'),
@@ -215,7 +214,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => detailsPage),
-    ).then((_) => _loadAndCombineRuns()); // Refresh all data when returning
+    ).then((_) => _loadPendingRuns()); // Refresh data when returning
   }
 
   // --- UI WIDGETS ---
@@ -223,8 +222,9 @@ class _AllRunsPageState extends State<AllRunsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.lightBlue[50],
+      // --- 3. REPLACE the old ReusableAppBar ---
       appBar: AppBar(
-        title: const Text("All Runs"),
+        title: const Text("Pending Runs"),
         backgroundColor: Colors.blueGrey,
       ),
       // --- 4. ADD the new SideBar to the drawer property ---
@@ -232,6 +232,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
         userName: Data.currentUser,
         activePage: ActivePage.runs, // This is part of the "Runs" section
       ),
+      // --- The body of your page remains exactly the same ---
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Row(
@@ -344,6 +345,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     );
   }
 
+  /// --- MODIFIED: Builds the styled data table for PENDING runs ---
   Widget _buildRunsTable() {
     return Container(
       decoration: BoxDecoration(
@@ -367,7 +369,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
               border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
             ),
             child: const Text(
-              'Run Overview',
+              'Pending Run Overview',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
           ),
@@ -411,7 +413,27 @@ class _AllRunsPageState extends State<AllRunsPage> {
                               color: MaterialStateProperty.all(rowColor),
                               cells: [
                                 DataCell(Text(run.runID)),
-                                DataCell(Text(run.status)),
+                                DataCell(
+                                  Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        run.status,
+                                        style: const TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                                 DataCell(Text(run.assignedPersonal)),
                                 DataCell(Text(run.age)),
                                 DataCell(

@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mineralflow/data/data.dart';
-import 'package:mineralflow/models/psd_model.dart'; // Import PsdModel
 import 'package:mineralflow/models/run_model.dart';
 import 'package:mineralflow/models/run2_model.dart';
 import 'package:mineralflow/view/Constants/utils.dart';
 import 'package:mineralflow/view/components/app_bar2.dart';
-import 'package:mineralflow/view/pages/psd_details.dart';
 import 'package:mineralflow/view/pages/run2_details.dart';
 import 'package:mineralflow/view/pages/run_details.dart';
 
-/// A wrapper class to unify RunModel, Run2Model, and PsdModel for display purposes.
+/// A wrapper class to unify RunModel and Run2Model for display purposes in the UI.
 class DisplayRun {
   final String runID;
   final String status;
   final String age;
   final String assignedPersonal;
   final DateTime date;
-  final dynamic originalRun; // Can be RunModel, Run2Model, or PsdModel
+  final dynamic originalRun;
 
   DisplayRun({
     required this.runID,
@@ -29,16 +27,16 @@ class DisplayRun {
   });
 }
 
-class AllRunsPage extends StatefulWidget {
-  const AllRunsPage({super.key});
+class InProgressRunsPage extends StatefulWidget {
+  const InProgressRunsPage({super.key});
 
   @override
-  State<AllRunsPage> createState() => _AllRunsPageState();
+  State<InProgressRunsPage> createState() => _InProgressRunsPageState();
 }
 
-class _AllRunsPageState extends State<AllRunsPage> {
-  // Master list that holds all runs without any filters.
-  List<DisplayRun> _allRuns = [];
+class _InProgressRunsPageState extends State<InProgressRunsPage> {
+  // Master list that holds all IN-PROGRESS runs without any filters.
+  List<DisplayRun> _allInProgressRuns = [];
   // The list that will be displayed in the UI after filters are applied.
   List<DisplayRun> _filteredRuns = [];
 
@@ -51,74 +49,60 @@ class _AllRunsPageState extends State<AllRunsPage> {
   @override
   void initState() {
     super.initState();
-    _loadAndCombineRuns();
+    _loadInProgressRuns();
   }
 
-  /// Loads, combines, and prepares all run data and filter options.
-  void _loadAndCombineRuns() {
+  /// --- MODIFIED: Loads only runs with 'In-Progress' status ---
+  void _loadInProgressRuns() {
     List<DisplayRun> combinedList = [];
-    Set<String> personnel = {'All'}; // Use a Set to avoid duplicates
+    Set<String> personnel = {'All'};
 
-    // Load RunModel runs
+    // Process all runs from the first list (RunModel)
     for (var run in Data.runList) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(),
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
+      if (run.status == 'In-Progress') {
+        combinedList.add(
+          DisplayRun(
+            runID: run.runID,
+            status: run.status,
+            age: run.getAge(),
+            assignedPersonal: run.assignedPersonal,
+            date: run.date,
+            originalRun: run,
+          ),
+        );
+        personnel.add(run.assignedPersonal);
+      }
     }
 
-    // Load Run2Model runs
+    // Process all runs from the second list (Run2Model)
     for (var run in Data.run2List) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(),
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
+      if (run.status == 'In-Progress') {
+        combinedList.add(
+          DisplayRun(
+            runID: run.runID,
+            status: run.status,
+            age: run.getAge(),
+            assignedPersonal: run.assignedPersonal,
+            date: run.date,
+            originalRun: run,
+          ),
+        );
+        personnel.add(run.assignedPersonal);
+      }
     }
 
-    // --- NEW: Load PsdModel runs from Data.psdList ---
-    for (var run in Data.psdList) {
-      combinedList.add(
-        DisplayRun(
-          runID: run.runID,
-          status: run.status,
-          age: run.getAge(), // PsdModel has a getAge() method
-          assignedPersonal: run.assignedPersonal,
-          date: run.date,
-          originalRun: run,
-        ),
-      );
-      personnel.add(run.assignedPersonal);
-    }
-    // --- END OF NEW CODE ---
-
-    // Set the state for the master list and filter options
     setState(() {
-      _allRuns = combinedList;
+      _allInProgressRuns = combinedList;
       _personnelOptions.clear();
       _personnelOptions.addAll(personnel.toList()..sort());
-      _applyFilters(); // Apply filters initially
+      _applyFilters();
     });
   }
 
-  /// Applies the current filter state to the master list of runs.
+  /// Applies the current filter state to the master list of IN-PROGRESS runs.
   void _applyFilters() {
-    List<DisplayRun> tempFilteredList = List.from(_allRuns);
+    List<DisplayRun> tempFilteredList = List.from(_allInProgressRuns);
 
-    // Filter by selected personnel
     if (_selectedPersonnel != null && _selectedPersonnel != 'All') {
       tempFilteredList =
           tempFilteredList
@@ -126,7 +110,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Filter by start date
     if (_startDate != null) {
       tempFilteredList =
           tempFilteredList
@@ -134,7 +117,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Filter by end date (inclusive)
     if (_endDate != null) {
       DateTime inclusiveEndDate = DateTime(
         _endDate!.year,
@@ -150,7 +132,6 @@ class _AllRunsPageState extends State<AllRunsPage> {
               .toList();
     }
 
-    // Sort the final filtered list by date
     tempFilteredList.sort((a, b) => b.date.compareTo(a.date));
 
     setState(() {
@@ -189,20 +170,13 @@ class _AllRunsPageState extends State<AllRunsPage> {
     }
   }
 
-  /// Navigates to the correct details page based on the run's original type.
   void _navigateToDetails(dynamic originalRun) {
     Widget detailsPage;
     if (originalRun is RunModel) {
       detailsPage = AnalyticalRunDetailsPage(run: originalRun);
     } else if (originalRun is Run2Model) {
       detailsPage = Run2DetailsPage(run: originalRun);
-    }
-    // --- NEW: Check for PsdModel and navigate to PsdPage ---
-    else if (originalRun is PsdModel) {
-      detailsPage = PsdPage(psdRun: originalRun);
-    }
-    // --- END OF NEW CODE ---
-    else {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Unknown run type.'),
@@ -215,7 +189,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => detailsPage),
-    ).then((_) => _loadAndCombineRuns()); // Refresh all data when returning
+    ).then((_) => _loadInProgressRuns()); // Refresh data when returning
   }
 
   // --- UI WIDGETS ---
@@ -224,7 +198,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     return Scaffold(
       backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
-        title: const Text("All Runs"),
+        title: const Text("In-Progress Runs"),
         backgroundColor: Colors.blueGrey,
       ),
       // --- 4. ADD the new SideBar to the drawer property ---
@@ -265,6 +239,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const Divider(height: 24),
+
           const Text(
             'Assigned To',
             style: TextStyle(fontWeight: FontWeight.w600),
@@ -290,6 +265,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
             },
           ),
           const SizedBox(height: 20),
+
           const Text(
             'Date Range',
             style: TextStyle(fontWeight: FontWeight.w600),
@@ -344,6 +320,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
     );
   }
 
+  /// --- MODIFIED: Builds the styled data table for IN-PROGRESS runs ---
   Widget _buildRunsTable() {
     return Container(
       decoration: BoxDecoration(
@@ -367,7 +344,7 @@ class _AllRunsPageState extends State<AllRunsPage> {
               border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
             ),
             child: const Text(
-              'Run Overview',
+              'In-Progress Run Overview', // --- Title updated ---
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
           ),
@@ -411,7 +388,28 @@ class _AllRunsPageState extends State<AllRunsPage> {
                               color: MaterialStateProperty.all(rowColor),
                               cells: [
                                 DataCell(Text(run.runID)),
-                                DataCell(Text(run.status)),
+                                DataCell(
+                                  // Display a styled badge for the status
+                                  Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        run.status,
+                                        style: TextStyle(
+                                          color: Colors.orange[800],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                                 DataCell(Text(run.assignedPersonal)),
                                 DataCell(Text(run.age)),
                                 DataCell(

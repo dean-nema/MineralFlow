@@ -3,7 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/data/sample_row.dart';
 import 'package:mineralflow/models/batch_model.dart';
+import 'package:mineralflow/view/Constants/utils.dart';
+import 'package:mineralflow/view/components/app_bar2.dart';
+// import 'package:mineralflow/view/components/app_bar2.dart'; // --- REMOVED: Old app bar import
 import 'package:mineralflow/view/pages/batch_list.dart';
+import 'package:mineralflow/view/pages/request_page.dart';
 
 class SampleRegistryPage extends StatefulWidget {
   final BatchModel batch;
@@ -16,6 +20,9 @@ class SampleRegistryPage extends StatefulWidget {
 class _SampleRegistryPageState extends State<SampleRegistryPage> {
   List<SampleRow> _sampleRows = [];
   final List<String> _sampleTypeOptions = Data.sampleTypeOptions;
+
+  // --- NEW: Flag to track if the batch was saved successfully ---
+  bool _isSaved = false;
 
   @override
   void initState() {
@@ -43,7 +50,6 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
             backgroundColor: Colors.red,
           ),
         );
-
         return; // Exit the function
       }
     }
@@ -70,15 +76,28 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
         sample.taskUpdate["Particle Size Distribution"] = "Pending";
       }
     }
+
+    // --- NEW: Set the flag to true since we are saving successfully ---
+    _isSaved = true;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('All samples validated and ready for submission!'),
+        content: Text('All samples validated and batch created!'),
         backgroundColor: Colors.green,
       ),
     );
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const BatchListPage()),
+    );
+  }
+
+  /// --- NEW: Function to handle cancellation ---
+  void _cancelRegistration() {
+    // Simply pop the page. The dispose method will handle the cleanup.
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const RequestPage()),
     );
   }
 
@@ -101,21 +120,6 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
         ),
       );
     }
-  }
-
-  void _addSampleRow() {
-    setState(() {
-      _sampleRows.add(
-        SampleRow(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          isFromInitialData: false,
-          sampleCodeController: TextEditingController(),
-          sampleDescriptionController: TextEditingController(),
-          sampleLocationController: TextEditingController(),
-          receivingWeightController: TextEditingController(),
-        ),
-      );
-    });
   }
 
   Future<void> _selectDateTime(BuildContext context, SampleRow row) async {
@@ -149,6 +153,17 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
 
   void _deleteSampleRow(String id) {
     setState(() {
+      // Prevent deleting the initial rows that came with the batch
+      if (_sampleRows.firstWhere((row) => row.id == id).isFromInitialData) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Cannot delete samples from the initial request."),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
       final rowToRemove = _sampleRows.firstWhere((row) => row.id == id);
       rowToRemove.sampleCodeController.dispose();
       rowToRemove.sampleDescriptionController.dispose();
@@ -160,26 +175,41 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
 
   @override
   void dispose() {
+    // First, dispose all the text controllers to prevent memory leaks
     for (var row in _sampleRows) {
       row.sampleCodeController.dispose();
       row.sampleDescriptionController.dispose();
       row.sampleLocationController.dispose();
       row.receivingWeightController.dispose();
     }
+
+    // --- NEW: Automatic batch cleanup logic ---
+    // If the page is being disposed and _isSaved is false, it means the user
+    // cancelled or navigated back without submitting. We should remove the batch.
+    if (!_isSaved) {
+      Data.batchList.remove(widget.batch);
+      print(
+        "Batch ${widget.batch.batchOrder} was not saved and has been discarded.",
+      );
+    }
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.lightBlue[50],
+      // --- MODIFIED: Add a standard AppBar to show the drawer menu button ---
       appBar: AppBar(
-        title: const Text(
-          "Sample Registry",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue[900],
-        foregroundColor: Colors.white,
+        title: Text('Register Samples for Batch #${widget.batch.batchOrder}'),
+        backgroundColor: Colors.blueGrey, // Matches the SideBar color
+      ),
+      // --- MODIFIED: Add the new SideBar as the drawer ---
+      drawer: SideBar(
+        userName: Data.currentUser,
+        activePage:
+            ActivePage.newBatch, // Use the appropriate enum for this page
       ),
       body: Center(
         child: Padding(
@@ -196,14 +226,10 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    // Vertical scroll
-                    // --- FIX START: Wrap with LayoutBuilder to get container width ---
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return SingleChildScrollView(
-                          // Horizontal scroll
                           scrollDirection: Axis.horizontal,
-                          // Force the DataTable to have a minimum width of the container
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
                               minWidth: constraints.maxWidth,
@@ -241,38 +267,23 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
                                       color: MaterialStateProperty.resolveWith<
                                         Color?
                                       >((states) {
-                                        if (index.isEven) {
+                                        if (index.isEven)
                                           return Colors.grey.withOpacity(0.12);
-                                        }
                                         return null;
                                       }),
                                       cells: [
                                         DataCell(Text((index + 1).toString())),
                                         DataCell(
-                                          row.isFromInitialData
-                                              ? _buildStaticTextCell(
-                                                row.sampleCodeController.text,
-                                              )
-                                              : SizedBox(
-                                                width: 150,
-                                                child: _buildTextField(
-                                                  row.sampleCodeController,
-                                                ),
-                                              ),
+                                          _buildStaticTextCell(
+                                            row.sampleCodeController.text,
+                                          ),
                                         ),
                                         DataCell(
-                                          row.isFromInitialData
-                                              ? _buildStaticTextCell(
-                                                row
-                                                    .sampleDescriptionController
-                                                    .text,
-                                              )
-                                              : SizedBox(
-                                                width: 200,
-                                                child: _buildTextField(
-                                                  row.sampleDescriptionController,
-                                                ),
-                                              ),
+                                          _buildStaticTextCell(
+                                            row
+                                                .sampleDescriptionController
+                                                .text,
+                                          ),
                                         ),
                                         DataCell(
                                           SizedBox(
@@ -360,6 +371,8 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
                                               Icons.delete_outline,
                                               color: Colors.red,
                                             ),
+                                            tooltip:
+                                                "Cannot delete initial samples",
                                             onPressed:
                                                 () => _deleteSampleRow(row.id),
                                           ),
@@ -372,20 +385,21 @@ class _SampleRegistryPageState extends State<SampleRegistryPage> {
                         );
                       },
                     ),
-                    // --- FIX END ---
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment:
+                        MainAxisAlignment.end, // Align buttons to the right
                     children: [
                       ElevatedButton.icon(
-                        onPressed: _addSampleRow,
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: const Text("Add Sample"),
+                        onPressed:
+                            _cancelRegistration, // Calls the new cancel function
+                        icon: const Icon(Icons.cancel_outlined),
+                        label: const Text("Cancel"),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue[800],
+                          backgroundColor: Colors.red[700],
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24,

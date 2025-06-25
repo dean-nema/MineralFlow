@@ -24,7 +24,6 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
     _initializeRunData();
   }
 
-  /// Ensures every sample has a RunDataModel, creating one if it doesn't exist.
   void _initializeRunData() {
     _currentRunData = List.from(widget.run.data);
     for (var sample in widget.run.samples) {
@@ -37,6 +36,7 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
             furnace: [null, null],
             dishWeight: [null, null],
             sampleWeight: [null, null],
+            dishPlusAshWeight: [null, null],
             ashContent: [null, null],
           ),
         );
@@ -45,44 +45,82 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
   }
 
   // --- LOGIC FUNCTIONS ---
-
-  /// --- MODIFIED: Includes validation and status update logic ---
+  /// --- MODIFIED to also handle the parent Batch status ---
   void _saveChanges() {
-    bool isAnyFieldFilled = false;
-    // Check if any of the data fields have been filled
-    for (final data in _currentRunData) {
-      if ((data.furnace?.any((f) => f != null && f.isNotEmpty) ?? false) ||
-          (data.dishWeight?.any((d) => d != null) ?? false) ||
-          (data.sampleWeight?.any((s) => s != null) ?? false) ||
-          (data.ashContent?.any((a) => a != null) ?? false)) {
-        isAnyFieldFilled = true;
-        break; // Found at least one filled field, no need to check further
+    bool isRunComplete = true;
+
+    // --- Part 1: Process each sample within the run ---
+    for (final runData in _currentRunData) {
+      String taskName = _currentRun.taskName;
+      bool canCalculate =
+          runData.ashContent?[0] != null && runData.ashContent?[1] != null;
+
+      if (canCalculate) {
+        bool isPass = runData.getResult(taskName);
+        if (isPass) {
+          double averageResult =
+              (runData.ashContent![0]! + runData.ashContent![1]!) / 2.0;
+          runData.sample.taskData[taskName] = averageResult;
+          runData.sample.taskUpdate[taskName] = 'Complete';
+        } else {
+          runData.sample.taskUpdate[taskName] = 'Failed';
+        }
+      } else {
+        isRunComplete = false;
       }
     }
 
-    // Update the original 'run' object passed to the widget with the current local state
+    // --- Part 2: Determine and set the overall Run and Batch statuses ---
     setState(() {
-      // If data has been entered, automatically update the status to In-Progress
-      if (isAnyFieldFilled && _currentRun.status == 'Pending') {
-        _currentRun.status = 'In-Progress';
+      if (isRunComplete) {
+        _currentRun.status = 'Complete';
+      } else {
+        bool isAnyFieldFilled = _currentRunData.any(
+          (data) =>
+              (data.dishWeight?.any((d) => d != null) ?? false) ||
+              (data.sampleWeight?.any((s) => s != null) ?? false) ||
+              (data.dishPlusAshWeight?.any((d) => d != null) ?? false),
+        );
+
+        if (isAnyFieldFilled && _currentRun.status == 'Pending') {
+          // Update the Run status
+          _currentRun.status = 'In-Progress';
+
+          // --- NEW LOGIC: Update the parent Batch status ---
+          // Assuming all samples in a run belong to the same batch.
+          if (_currentRun.samples.isNotEmpty) {
+            // Find the batch that these samples belong to by searching the global list.
+            final batchToUpdate = Data.batchList.firstWhere(
+              (b) => b.samples.contains(_currentRun.samples.first),
+              // Return null if not found
+            );
+
+            // If we found the batch and it's pending, update it.
+            if (batchToUpdate != null && batchToUpdate.status == 'Pending') {
+              batchToUpdate.status = 'In-Progress';
+              print(
+                'Parent Batch ${batchToUpdate.batchOrder} status updated to In-Progress.',
+              );
+            }
+          }
+          // --- END OF NEW LOGIC ---
+        }
       }
+
       widget.run.status = _currentRun.status;
       widget.run.data = _currentRunData;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isAnyFieldFilled
-              ? 'Changes saved and status updated to In-Progress!'
-              : 'Changes saved!',
-        ),
+      const SnackBar(
+        content: Text('Changes saved and sample data updated!'),
         backgroundColor: Colors.green,
       ),
     );
-    Navigator.pushReplacement(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => AllRunsPage()),
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -113,6 +151,34 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
             ],
           ),
     );
+  }
+
+  void _preCalculateResults() {
+    for (final runData in _currentRunData) {
+      for (int i = 0; i < 2; i++) {
+        double? m1 = runData.dishWeight?[i];
+        double? sampleMass = runData.sampleWeight?[i];
+        double? m3 = runData.dishPlusAshWeight?[i];
+
+        runData.ashContent?[i] = null;
+
+        bool canCalculate =
+            m1 != null && sampleMass != null && m3 != null && sampleMass > 0;
+
+        if (canCalculate) {
+          if (_currentRun.taskName == "ISO Ash" ||
+              _currentRun.taskName == "Quick Ash") {
+            runData.ashContent?[i] = (((m3! - m1!) / sampleMass!) * 100);
+          } else if (_currentRun.taskName == "ISO Moisture") {
+            double m2 = m1! + sampleMass!;
+            runData.ashContent?[i] = (((m2 - m3!) / sampleMass!) * 100);
+          } else if (_currentRun.taskName == "ISO Volatile") {
+            double m2 = m1! + sampleMass!;
+            runData.ashContent?[i] = ((100 * (m2 - m3!)) / sampleMass!);
+          }
+        }
+      }
+    }
   }
 
   // --- UI WIDGETS ---
@@ -185,7 +251,38 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
     );
   }
 
+  List<DataColumn> _getDynamicTableColumns() {
+    String dishWeightLabel = "Dish Weight (g)";
+    String finalWeightLabel = "Dish + Sample (After) (g)";
+    String resultLabel = "Result (%)";
+
+    if (_currentRun.taskName == "ISO Ash" ||
+        _currentRun.taskName == "Quick Ash") {
+      dishWeightLabel = "Dish Weight (g)";
+      resultLabel = "Ash (%)";
+    } else if (_currentRun.taskName == "ISO Moisture") {
+      dishWeightLabel = "Dish + Cover (g)";
+      resultLabel = "Moisture (%)";
+    } else if (_currentRun.taskName == "ISO Volatile") {
+      dishWeightLabel = "Crucible + Lid (g)";
+      finalWeightLabel = "Crucible + Lid + Contents (After) (g)";
+      resultLabel = "Volatile Matter (%)";
+    }
+
+    return [
+      const DataColumn(label: Text('Sample Code')),
+      const DataColumn(label: Text('Furnace No.')),
+      DataColumn(label: Text(dishWeightLabel)),
+      const DataColumn(label: Text('Sample Weight (g)')),
+      DataColumn(label: Text(finalWeightLabel)),
+      DataColumn(label: Text(resultLabel)),
+      const DataColumn(label: Text('Result')),
+    ];
+  }
+
   Widget _buildSamplesTable() {
+    _preCalculateResults();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -217,15 +314,7 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
                     constraints: BoxConstraints(minWidth: constraints.maxWidth),
                     child: DataTable(
                       columnSpacing: 20,
-                      columns: const [
-                        DataColumn(label: Text('Sample Code')),
-                        DataColumn(label: Text('Furnace No.')),
-                        DataColumn(label: Text('Dish Weight (g)')),
-                        DataColumn(label: Text('Sample Weight (g)')),
-                        DataColumn(label: Text('Dish+Sample (g)')),
-                        DataColumn(label: Text('Ash Content (%)')),
-                        DataColumn(label: Text('Result')),
-                      ],
+                      columns: _getDynamicTableColumns(),
                       rows: _buildTableRows(),
                     ),
                   ),
@@ -250,9 +339,10 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
 
   DataRow _buildDataEntryRow(RunDataModel runData, int index) {
     String suffix = index == 0 ? 'A' : 'B';
-    double? dishWeight = runData.dishWeight?[index];
-    double? sampleWeight = runData.sampleWeight?[index];
-    double dishPlusSample = (dishWeight ?? 0) + (sampleWeight ?? 0);
+
+    double? m1 = runData.dishWeight?[index];
+    double? sampleMass = runData.sampleWeight?[index];
+    double? m3 = runData.dishPlusAshWeight?[index];
 
     return DataRow(
       cells: [
@@ -266,7 +356,7 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
         DataCell(
           _buildTextField(
             isNumeric: true,
-            initialValue: dishWeight?.toString(),
+            initialValue: m1?.toString(),
             onChanged:
                 (val) => setState(
                   () => runData.dishWeight?[index] = double.tryParse(val),
@@ -276,7 +366,7 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
         DataCell(
           _buildTextField(
             isNumeric: true,
-            initialValue: sampleWeight?.toString(),
+            initialValue: sampleMass?.toString(),
             onChanged:
                 (val) => setState(
                   () => runData.sampleWeight?[index] = double.tryParse(val),
@@ -284,27 +374,31 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
           ),
         ),
         DataCell(
-          Text(dishPlusSample > 0 ? dishPlusSample.toStringAsFixed(4) : ''),
-        ),
-        DataCell(
           _buildTextField(
             isNumeric: true,
-            initialValue: runData.ashContent?[index]?.toString(),
+            initialValue: m3?.toString(),
             onChanged:
                 (val) => setState(
-                  () => runData.ashContent?[index] = double.tryParse(val),
+                  () =>
+                      runData.dishPlusAshWeight?[index] = double.tryParse(val),
                 ),
           ),
         ),
-        // --- MODIFIED: Show result cell for Row A, empty for Row B ---
+        DataCell(
+          Center(
+            child: Text(
+              runData.ashContent?[index]?.toStringAsFixed(2) ?? '-',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
         index == 0
             ? _buildResultCell(runData)
-            : const DataCell(SizedBox.shrink()), // Effectively merges the cell
+            : const DataCell(SizedBox.shrink()),
       ],
     );
   }
 
-  /// --- NEW HELPER: Creates the styled PASS/FAIL cell ---
   DataCell _buildResultCell(RunDataModel runData) {
     bool canCalculate =
         runData.ashContent?[0] != null && runData.ashContent?[1] != null;
@@ -350,7 +444,9 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
     return DataRow(
       color: MaterialStateProperty.all(Colors.blueGrey[50]),
       cells: [
-        const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+        const DataCell(
+          Text('Difference', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
         const DataCell(Text('')),
         const DataCell(Text('')),
         const DataCell(Text('')),
@@ -358,12 +454,12 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
         DataCell(
           Center(
             child: Text(
-              '',
+              canCalculate ? difference.toStringAsFixed(4) : '',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),
-        const DataCell(Text('')), // Result cell is now part of the A/B rows
+        const DataCell(Text('')),
       ],
     );
   }
@@ -403,7 +499,7 @@ class _AnalyticalRunDetailsPageState extends State<AnalyticalRunDetailsPage> {
     required ValueChanged<String> onChanged,
   }) {
     return SizedBox(
-      width: 100,
+      width: 120, // Increased width slightly for longer labels
       child: TextFormField(
         initialValue: initialValue ?? '',
         keyboardType:

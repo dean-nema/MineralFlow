@@ -4,6 +4,7 @@ class SampleModel {
   String? sampleType;
   double? receivingWeight;
   Map<String, String> taskUpdate = Map();
+  Map<String, double> taskData = Map();
   bool psd = false;
 
   SampleModel({

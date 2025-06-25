@@ -2,23 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mineralflow/data/data.dart';
 import 'package:mineralflow/models/batch_model.dart';
-// import 'package:mineralflow/view/Constants/colors.dart'; // This import is not used
 import 'package:mineralflow/view/Constants/utils.dart';
 import 'package:mineralflow/view/components/app_bar2.dart';
-// import 'package:mineralflow/view/components/app_bar2.dart'; // --- REMOVED: Old app bar import
 import 'package:mineralflow/view/pages/batch_details.dart';
 import 'package:mineralflow/view/pages/request_page.dart';
 
-class BatchListPage extends StatefulWidget {
-  const BatchListPage({super.key});
+class FinalizedBatchesPage extends StatefulWidget {
+  const FinalizedBatchesPage({super.key});
 
   @override
-  State<BatchListPage> createState() => _BatchListPageState();
+  State<FinalizedBatchesPage> createState() => _FinalizedBatchesPageState();
 }
 
-class _BatchListPageState extends State<BatchListPage> {
+class _FinalizedBatchesPageState extends State<FinalizedBatchesPage> {
   // --- STATE VARIABLES ---
-  late List<BatchModel> _allBatches;
+  late List<BatchModel> _allFinalizedBatches;
   late List<BatchModel> _filteredBatches;
 
   final TextEditingController _clientCodeFilterController =
@@ -27,17 +25,13 @@ class _BatchListPageState extends State<BatchListPage> {
       TextEditingController();
   final TextEditingController _dateFilterController = TextEditingController();
 
-  String? _statusFilter;
   DateTime? _startDateFilter;
   DateTime? _endDateFilter;
-
-  final List<String> _statusOptions = Data.statusOptions;
 
   @override
   void initState() {
     super.initState();
-    _allBatches = Data.batchList;
-    _filteredBatches = List.from(_allBatches);
+    _loadFinalizedBatches();
   }
 
   @override
@@ -49,29 +43,34 @@ class _BatchListPageState extends State<BatchListPage> {
   }
 
   // --- LOGIC FUNCTIONS ---
+
+  /// --- MODIFIED: Loads only 'Finalized' batches from the source ---
+  void _loadFinalizedBatches() {
+    // The master list is pre-filtered to only include Finalized batches.
+    _allFinalizedBatches =
+        Data.batchList.where((batch) => batch.status == 'Finalized').toList();
+    _filteredBatches = List.from(_allFinalizedBatches);
+  }
+
+  /// --- MODIFIED: Simplified filter logic without status check ---
   void _applyFilters() {
     setState(() {
       _filteredBatches =
-          _allBatches.where((batch) {
+          _allFinalizedBatches.where((batch) {
             final clientCodeMatch =
                 _clientCodeFilterController.text.isEmpty ||
                 batch.getClientCode().toLowerCase().contains(
                   _clientCodeFilterController.text.toLowerCase(),
                 );
 
-            final statusMatch =
-                _statusFilter == null || batch.status == _statusFilter;
-
             final personMatch =
                 _personAssignedFilterController.text.isEmpty ||
-                (batch.assignedPersonal == null
-                    ? false
-                    : batch.assignedPersonal!.toLowerCase().contains(
-                      _personAssignedFilterController.text.toLowerCase(),
-                    ));
+                (batch.assignedPersonal ?? '').toLowerCase().contains(
+                  _personAssignedFilterController.text.toLowerCase(),
+                );
 
             final dateMatch =
-                (_startDateFilter == null && _endDateFilter == null) ||
+                (_startDateFilter == null || _endDateFilter == null) ||
                 (batch.receivingDate.isAfter(
                       _startDateFilter!.subtract(const Duration(days: 1)),
                     ) &&
@@ -79,7 +78,7 @@ class _BatchListPageState extends State<BatchListPage> {
                       _endDateFilter!.add(const Duration(days: 1)),
                     ));
 
-            return clientCodeMatch && statusMatch && personMatch && dateMatch;
+            return clientCodeMatch && personMatch && dateMatch;
           }).toList();
     });
   }
@@ -89,10 +88,9 @@ class _BatchListPageState extends State<BatchListPage> {
       _clientCodeFilterController.clear();
       _personAssignedFilterController.clear();
       _dateFilterController.clear();
-      _statusFilter = null;
       _startDateFilter = null;
       _endDateFilter = null;
-      _filteredBatches = List.from(_allBatches);
+      _filteredBatches = List.from(_allFinalizedBatches);
     });
   }
 
@@ -122,15 +120,14 @@ class _BatchListPageState extends State<BatchListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      // --- MODIFIED: Add a standard AppBar to show the drawer menu button ---
       appBar: AppBar(
-        title: const Text('All Batches'),
-        backgroundColor: Colors.blueGrey, // Matches the SideBar color
+        title: const Text("Finalized Batch"),
+        backgroundColor: Colors.blueGrey,
       ),
-      // --- MODIFIED: Add the new SideBar as the drawer ---
+      // --- 4. ADD the new SideBar to the drawer property ---
       drawer: SideBar(
         userName: Data.currentUser,
-        activePage: ActivePage.batches,
+        activePage: ActivePage.runs, // This is part of the "Runs" section
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -146,6 +143,7 @@ class _BatchListPageState extends State<BatchListPage> {
     );
   }
 
+  /// --- MODIFIED: Filter panel without the status dropdown ---
   Widget _buildFiltersPanel() {
     return Container(
       width: 300,
@@ -187,8 +185,6 @@ class _BatchListPageState extends State<BatchListPage> {
                   _clientCodeFilterController,
                   'Client Code',
                 ),
-                const SizedBox(height: 16),
-                _buildFilterDropdown(),
                 const SizedBox(height: 16),
                 _buildFilterDatePicker(),
                 const SizedBox(height: 16),
@@ -252,19 +248,40 @@ class _BatchListPageState extends State<BatchListPage> {
   }
 
   Widget _buildDataTablePanel() {
-    return Column(
-      children: [
-        Expanded(
-          child: Container(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header for the table
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-              ],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
             ),
+            child: const Text(
+              'Finalized Batches', // --- MODIFIED: Title ---
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          // Table content
+          Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return SingleChildScrollView(
@@ -334,31 +351,28 @@ class _BatchListPageState extends State<BatchListPage> {
                                       ),
                                     ),
                                   ),
+                                  // --- MODIFIED: Status is now a styled "Finalized" badge ---
                                   DataCell(
-                                    DropdownButton<String>(
-                                      value: batch.status,
-                                      underline: Container(),
-                                      items:
-                                          _statusOptions.map((String value) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value),
-                                            );
-                                          }).toList(),
-                                      onChanged: (String? newValue) {
-                                        if (newValue != null) {
-                                          setState(() {
-                                            final originalBatch = _allBatches
-                                                .firstWhere(
-                                                  (b) =>
-                                                      b.batchOrder ==
-                                                      batch.batchOrder,
-                                                );
-                                            originalBatch.status = newValue;
-                                            batch.status = newValue;
-                                          });
-                                        }
-                                      },
+                                    Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          batch.status!,
+                                          style: TextStyle(
+                                            color: Colors.grey[800],
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   DataCell(
@@ -387,9 +401,8 @@ class _BatchListPageState extends State<BatchListPage> {
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 20),
-      ],
+        ],
+      ),
     );
   }
 
@@ -402,27 +415,6 @@ class _BatchListPageState extends State<BatchListPage> {
         border: const OutlineInputBorder(),
         isDense: true,
       ),
-    );
-  }
-
-  Widget _buildFilterDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _statusFilter,
-      decoration: const InputDecoration(
-        labelText: 'Status',
-        border: OutlineInputBorder(),
-        isDense: true,
-      ),
-      hint: const Text('Any Status'),
-      items:
-          _statusOptions.map((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          }).toList(),
-      onChanged: (String? newValue) {
-        setState(() {
-          _statusFilter = newValue;
-        });
-      },
     );
   }
 
